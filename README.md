@@ -1,5 +1,3 @@
-Here’s the updated README with the **Hosted URLs** section placed appropriately before the features list and the `.env` configuration included properly:
-
 ```markdown
 # TaskForce Wallet 🚀
 

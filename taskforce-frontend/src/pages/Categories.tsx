@@ -69,18 +69,22 @@ export default function Categories() {
   };
 
   const handleDeleteSubcategory = (categoryId: number, subcategoryIndex: number) => {
-    const updatedCategories = categories.map((category) => {
-      if (category.id === categoryId) {
-        const updatedSubcategories = category.subcategories.filter((_, index) => index !== subcategoryIndex);
-        return { ...category, subcategories: updatedSubcategories };
-      }
-      return category;
-    });
-    setCategories(updatedCategories);
+    if (window.confirm('Are you sure you want to delete this subcategory?')) {
+      const updatedCategories = categories.map((category) => {
+        if (category.id === categoryId) {
+          const updatedSubcategories = category.subcategories.filter((_, index) => index !== subcategoryIndex);
+          return { ...category, subcategories: updatedSubcategories };
+        }
+        return category;
+      });
+      setCategories(updatedCategories);
+    }
   };
 
   const handleDeleteCategory = (categoryId: number) => {
-    setCategories(categories.filter((category) => category.id !== categoryId));
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      setCategories(categories.filter((category) => category.id !== categoryId));
+    }
   };
 
   return (

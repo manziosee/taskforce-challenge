@@ -1,47 +1,45 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { login as loginService, register as registerService, logout as logoutService, changePassword as changePasswordService } from '../services/authService';
+import { AuthContextType } from './authTypes'; // Import the type
 
-interface AuthContextType {
-  token: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  changePassword: async () => {},
+});
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
 
-  const login = async (email: string, password: string) => {
-    // Mock login function - replace with actual API call
-    console.log('Logging in with email:', email, 'password:', password);
-    const mockToken = 'mockToken123';
-    setToken(mockToken);
-    localStorage.setItem('token', mockToken);
+  const login = async (credentials: { email: string; password: string }) => {
+    const data = await loginService(credentials);
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    // Mock register function - replace with actual API call
-    console.log('User registered:', { name, email, password });
+  const register = async (userData: { name: string; email: string; password: string }) => {
+    const data = await registerService(userData);
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
   };
 
-  const logout = () => {
-    setToken(null);
+  const logout = async () => {
+    await logoutService();
     localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  const changePassword = async (passwordData: { currentPassword: string; newPassword: string }) => {
+    await changePasswordService(passwordData);
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, register, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, login, register, logout, changePassword }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+}

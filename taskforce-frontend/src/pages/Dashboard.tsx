@@ -1,5 +1,4 @@
-// src/pages/Dashboard.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,6 +13,8 @@ import {
 } from 'chart.js';
 import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, CreditCard, Banknote } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import { useAuth } from '../context/AuthContext';
+import { getDashboardData } from '../services/dashboardService';
 
 ChartJS.register(
   CategoryScale,
@@ -26,77 +27,118 @@ ChartJS.register(
   ArcElement
 );
 
+interface DashboardData {
+  incomeVsExpenses: {
+    income: number[];
+    expenses: number[];
+  };
+  expenseCategories: {
+    categories: string[];
+    data: number[];
+  };
+  recentTransactions: {
+    id: number;
+    description: string;
+    amount: number;
+    date: string;
+    category: string;
+  }[];
+  totalBalance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  incomeChange: string;
+  expensePercentage: number;
+}
+
 export default function Dashboard() {
   const { currency } = useCurrency();
+  const { user } = useAuth();
   const [timeRange] = useState('This Month');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const lineChartData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-    datasets: [
-      {
-        label: 'Income',
-        data: [150000, 200000, 180000, 250000],
-        borderColor: 'rgb(34, 197, 94)',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: 'Expenses',
-        data: [100000, 150000, 120000, 180000],
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getDashboardData(user?.id || '');
+        setDashboardData(response);
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to fetch dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) {
+      fetchDashboard();
+    }
+  }, [user]);
 
-  const pieChartData = {
-    labels: ['Food', 'Transport', 'Entertainment', 'Bills', 'Others'],
-    datasets: [
-      {
-        data: [30, 20, 15, 25, 10],
-        backgroundColor: [
-          'rgb(59, 130, 246)',
-          'rgb(234, 179, 8)',
-          'rgb(168, 85, 247)',
-          'rgb(239, 68, 68)',
-          'rgb(34, 197, 94)',
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const lineChartData = dashboardData
+    ? {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [
+          {
+            label: 'Income',
+            data: dashboardData?.incomeVsExpenses?.income || [],
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: 'Expenses',
+            data: dashboardData?.incomeVsExpenses?.expenses || [],
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4,
+            fill: true,
+          },
         ],
-      },
-    ],
-  };
+      }
+    : {
+        labels: [],
+        datasets: [],
+      };
 
-  const recentTransactions = [
-    {
-      id: 1,
-      description: 'Grocery Shopping',
-      amount: -45000,
-      date: '2024-03-15',
-      category: 'Food',
-    },
-    {
-      id: 2,
-      description: 'Salary Deposit',
-      amount: 250000,
-      date: '2024-03-14',
-      category: 'Income',
-    },
-    {
-      id: 3,
-      description: 'Internet Bill',
-      amount: -25000,
-      date: '2024-03-13',
-      category: 'Bills',
-    },
-  ];
+  const pieChartData = dashboardData
+    ? {
+        labels: dashboardData?.expenseCategories?.categories || [],
+        datasets: [
+          {
+            data: dashboardData?.expenseCategories?.data || [],
+            backgroundColor: [
+              'rgb(59, 130, 246)',
+              'rgb(234, 179, 8)',
+              'rgb(168, 85, 247)',
+              'rgb(239, 68, 68)',
+              'rgb(34, 197, 94)',
+              'rgb(107, 114, 128)',
+            ],
+          },
+        ],
+      }
+    : {
+        labels: [],
+        datasets: [],
+      };
+
+  const recentTransactions = dashboardData?.recentTransactions || [];
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back, Eric!</h1>
+          <h1 className="text-2xl font-bold">Welcome back, {user?.name || 'User'}!</h1>
           <p className="text-gray-600 dark:text-gray-400">Here's your financial overview</p>
         </div>
         <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700">
@@ -118,7 +160,7 @@ export default function Dashboard() {
             </div>
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Total Balance</span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} 500,000</p>
+          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalBalance?.toLocaleString()}</p>
           <p className="text-sm text-blue-100">Across all accounts</p>
         </div>
 
@@ -129,8 +171,8 @@ export default function Dashboard() {
             </div>
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Income</span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} 250,000</p>
-          <p className="text-sm text-green-100">+15% from last month</p>
+          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalIncome?.toLocaleString()}</p>
+          <p className="text-sm text-green-100">{dashboardData?.incomeChange}</p>
         </div>
 
         <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl shadow-lg text-white">
@@ -140,8 +182,8 @@ export default function Dashboard() {
             </div>
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Expenses</span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} 180,000</p>
-          <p className="text-sm text-red-100">72% of monthly budget</p>
+          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalExpenses?.toLocaleString()}</p>
+          <p className="text-sm text-red-100">{dashboardData?.expensePercentage}% of monthly budget</p>
         </div>
       </div>
 

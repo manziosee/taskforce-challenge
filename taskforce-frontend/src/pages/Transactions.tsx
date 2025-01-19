@@ -1,5 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { getTransactions, addTransaction, updateTransaction, deleteTransaction } from '../services/transactionService';
+
+interface Transaction {
+  id: number;
+  date: string;
+  description: string;
+  category: string;
+  account: string;
+  amount: number;
+  type: 'income' | 'expense';
+}
 
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,74 +23,92 @@ export default function Transactions() {
     account: '',
     amount: '',
   });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  const [transactions, setTransactions] = useState([
-    {
-      id: 1,
-      date: '2024-03-15',
-      description: 'Grocery Shopping',
-      category: 'Food',
-      account: 'Bank Account',
-      amount: -45000,
-      type: 'expense',
-    },
-    {
-      id: 2,
-      date: '2024-03-14',
-      description: 'Salary Deposit',
-      category: 'Income',
-      account: 'Bank Account',
-      amount: 250000,
-      type: 'income',
-    },
-  ]);
-
-  const [editingTransaction, setEditingTransaction] = useState<{
-    id: number;
-    date: string;
-    description: string;
-    category: string;
-    account: string;
-    amount: number;
-    type: 'income' | 'expense';
-  } | null>(null);
-
-  const handleAddTransaction = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newTransactionData = {
-      id: transactions.length + 1,
-      date: newTransaction.date,
-      description: newTransaction.description,
-      category: newTransaction.category,
-      account: newTransaction.account,
-      amount: Number(newTransaction.amount),
-      type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getTransactions(user?.id || '');
+        setTransactions(response);
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to fetch transactions');
+      } finally {
+        setLoading(false);
+      }
     };
-    setTransactions([...transactions, newTransactionData]);
-    setShowAddForm(false);
-    setNewTransaction({ date: '', description: '', category: '', account: '', amount: '' });
-  };
+    if (user) {
+      fetchTransactions();
+    }
+  }, [user]);
 
-  const handleEditTransaction = (transaction: typeof transactions[0]) => {
-      setEditingTransaction({
-          ...transaction,
-          type: transaction.type as 'income' | 'expense',
-      });
-  };
-
-  const handleUpdateTransaction = (e: React.FormEvent) => {
+  const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingTransaction) {
-      const updatedTransactions = transactions.map((t) =>
-        t.id === editingTransaction.id ? editingTransaction : t
-      );
-      setTransactions(updatedTransactions);
-      setEditingTransaction(null);
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await addTransaction({
+        ...newTransaction,
+        userId: user?.id || '',
+        amount: Number(newTransaction.amount),
+        type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
+      });
+      setTransactions([...transactions, response]);
+      setShowAddForm(false);
+      setNewTransaction({ date: '', description: '', category: '', account: '', amount: '' });
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to add transaction');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteTransaction = (id: number) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction({
+      ...transaction,
+      type: transaction.amount > 0 ? 'income' : 'expense',
+    });
+  };
+
+  const handleUpdateTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingTransaction) {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await updateTransaction(editingTransaction.id, {
+          ...editingTransaction,
+          type: Number(editingTransaction.amount) > 0 ? 'income' : 'expense',
+        });
+        const updatedTransactions = transactions.map((t) =>
+          t.id === editingTransaction.id ? response : t
+        );
+        setTransactions(updatedTransactions);
+        setEditingTransaction(null);
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to update transaction');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDeleteTransaction = async (id: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await deleteTransaction(id);
+      setTransactions(transactions.filter((t) => t.id !== id));
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to delete transaction');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -188,11 +218,15 @@ export default function Transactions() {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={loading}
                 >
-                  Save Transaction
+                  {loading ? 'Saving...' : 'Save Transaction'}
                 </button>
               </div>
             </form>
+            {error && (
+              <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+            )}
           </div>
         </div>
       )}
@@ -299,11 +333,15 @@ export default function Transactions() {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={loading}
                 >
-                  Update Transaction
+                  {loading ? 'Updating...' : 'Update Transaction'}
                 </button>
               </div>
             </form>
+            {error && (
+              <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+            )}
           </div>
         </div>
       )}
@@ -365,11 +403,10 @@ export default function Transactions() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {transaction.account}
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                    transaction.type === 'income' 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  }`}>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${transaction.type === 'income'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                    }`}>
                     {transaction.type === 'income' ? '+' : '-'}
                     {transaction.amount.toLocaleString()}
                   </td>
