@@ -17,7 +17,7 @@ const BudgetNotificationEmail: React.FC<BudgetNotificationEmailProps> = ({ messa
   return (
     <Html>
       <Head />
-      <Preview>Budget Exceeded Notification</Preview>
+      <Preview>{"Budget Exceeded Notification"}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Text style={company}>TaskForce Wallet</Text>

@@ -4,6 +4,7 @@ import User from '../models/User';
 import EmailService from '../service/emails.service';
 import { HttpError, ErrorHandler } from '../utils/http/error-handler';
 import logger from '../utils/logger';
+import BudgetNotificationEmail from '../emails/BudgetNotificationEmail';
 
 export const checkBudget = async (userId: string) => {
   try {
@@ -14,7 +15,11 @@ export const checkBudget = async (userId: string) => {
       if (budget.spent > budget.limit) {
         const message = `Budget exceeded for ${budget.category}. Limit: ${budget.limit}, Spent: ${budget.spent}`;
         if (user) {
-          await EmailService.sendBudgetNotification(user.email, message);
+          // Send email notification
+          await EmailService.sendOTP(
+            { to: user.email, subject: 'Budget Exceeded Notification' },
+            await BudgetNotificationEmail({ message })
+          );
         }
       }
     }

@@ -1,4 +1,3 @@
-// src/controllers/authController.ts
 import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -24,8 +23,9 @@ export const register = async (req: Request, res: Response): Promise<Response | 
     await sendEmail(email, 'Welcome to TaskForce Wallet', code);
 
     res.status(201).json({ message: 'User registered successfully' });
-  } catch {
-    res.status(500).json({ error: 'Error registering user' });
+  } catch (error) {
+    logger.error(`Error registering user: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error registering user', 'InternalServerError'), res);
   }
 };
 
@@ -40,8 +40,9 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1h' });
     res.json({ token });
-  } catch {
-    res.status(500).json({ error: 'Error logging in' });
+  } catch (error) {
+    logger.error(`Error logging in: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error logging in', 'InternalServerError'), res);
   }
 };
 
@@ -60,8 +61,9 @@ export const changePassword = async (req: Request, res: Response): Promise<Respo
     await user.save();
 
     res.json({ message: 'Password changed successfully' });
-  } catch {
-    res.status(500).json({ error: 'Error changing password' });
+  } catch (error) {
+    logger.error(`Error changing password: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error changing password', 'InternalServerError'), res);
   }
 };
 
@@ -72,7 +74,7 @@ export const logout = async (req: Request, res: Response): Promise<Response | vo
   }
 
   try {
-    // Add the token to the in-memory blacklist
+    // Add the token to the revoked tokens list
     revokedTokens.add(token);
     logger.info(`User logged out. Token revoked: ${token}`);
     res.status(200).json({ message: 'Logged out successfully' });
