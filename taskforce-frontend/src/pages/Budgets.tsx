@@ -1,60 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { useCurrency } from '../context/CurrencyContext'; // Import the useCurrency hook
+import { useCurrency } from '../context/CurrencyContext';
+import { getBudgets, addBudget, deleteBudget } from '../services/budgetService';
+
+interface Budget {
+  id: string;
+  category: string;
+  limit: number;
+  spent: number;
+  period: string;
+}
 
 export default function Budgets() {
-  const { currency } = useCurrency(); // Get the current currency from the context
-  const [budgets, setBudgets] = useState([
-    {
-      id: 1,
-      category: 'Food & Dining',
-      limit: 150000,
-      spent: 120000,
-      period: 'Monthly',
-    },
-    {
-      id: 2,
-      category: 'Transportation',
-      limit: 80000,
-      spent: 85000,
-      period: 'Monthly',
-    },
-    {
-      id: 3,
-      category: 'Entertainment',
-      limit: 100000,
-      spent: 45000,
-      period: 'Monthly',
-    },
-  ]);
-
+  const { currency } = useCurrency();
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBudget, setNewBudget] = useState({
     category: '',
     limit: 0,
     period: 'Monthly',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleAddBudget = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newBudgetData = {
-      id: budgets.length + 1,
-      category: newBudget.category,
-      limit: newBudget.limit,
-      spent: 0,
-      period: newBudget.period,
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      setLoading(true);
+      try {
+        const data = await getBudgets('userId'); // Replace 'userId' with the actual user ID
+        setBudgets(data);
+      } catch (err) {
+        setError('Failed to fetch budgets');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
-    setBudgets([...budgets, newBudgetData]);
-    setShowAddForm(false);
-    setNewBudget({ category: '', limit: 0, period: 'Monthly' });
+
+    fetchBudgets();
+  }, []);
+
+  const handleAddBudget = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = await addBudget(newBudget);
+      setBudgets([...budgets, data]);
+      setShowAddForm(false);
+      setNewBudget({ category: '', limit: 0, period: 'Monthly' });
+    } catch (err) {
+      setError('Failed to add budget');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteBudget = (id: number) => {
-    setBudgets(budgets.filter((budget) => budget.id !== id));
+  const handleDeleteBudget = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteBudget(id);
+      setBudgets(budgets.filter((budget) => budget.id !== id));
+    } catch (err) {
+      setError('Failed to delete budget');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="p-6 space-y-6">
+      {error && <div className="text-red-500">{error}</div>}
+      {loading && <div>Loading...</div>}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Budget Planning</h1>
         <button
@@ -66,7 +85,6 @@ export default function Budgets() {
         </button>
       </div>
 
-      {/* Add Budget Modal */}
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -137,62 +155,58 @@ export default function Budgets() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {budgets.map((budget) => {
-          const percentage = (budget.spent / budget.limit) * 100;
-          const isOverBudget = percentage > 100;
-
-          return (
-            <div key={budget.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">{budget.category}</h3>
-                <div className="flex items-center space-x-2">
-                  <button
-                    className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                    title="Delete"
-                    onClick={() => handleDeleteBudget(budget.id)}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Spent</span>
-                  <span>Budget</span>
-                </div>
-                <div className="flex justify-between font-medium">
-                  <span>{currency} {budget.spent.toLocaleString()}</span>
-                  <span>{currency} {budget.limit.toLocaleString()}</span>
-                </div>
-
-                <div className="relative pt-1">
-                  <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
-                        isOverBudget ? 'bg-red-500' : percentage > 80 ? 'bg-yellow-500' : 'bg-green-500'
-                      }`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className={isOverBudget ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}>
-                    {percentage.toFixed(1)}% used
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">{budget.period}</span>
-                </div>
+        {budgets.map((budget) => (
+          <div key={budget.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">{budget.category}</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                  title="Edit"
+                >
+                  <Edit2 className="w-5 h-5" />
+                </button>
+                <button
+                  className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                  title="Delete"
+                  onClick={() => handleDeleteBudget(budget.id)}
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
               </div>
             </div>
-          );
-        })}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                <span>Spent</span>
+                <span>Budget</span>
+              </div>
+              <div className="flex justify-between font-medium">
+                <span>{currency} {budget.spent.toLocaleString()}</span>
+                <span>{currency} {budget.limit.toLocaleString()}</span>
+              </div>
+              <div className="relative pt-1">
+                <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
+                      (budget.spent / budget.limit) * 100 > 100
+                        ? 'bg-red-500'
+                        : (budget.spent / budget.limit) * 100 > 80
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min((budget.spent / budget.limit) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className={(budget.spent / budget.limit) * 100 > 100 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}>
+                  {((budget.spent / budget.limit) * 100).toFixed(1)}% used
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">{budget.period}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

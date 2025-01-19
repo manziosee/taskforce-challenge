@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
 import { Calendar, Download } from 'lucide-react';
 import {
@@ -13,6 +13,8 @@ import {
   Legend,
 } from 'chart.js';
 import { useCurrency } from '../context/CurrencyContext';
+import { useAuth } from '../context/AuthContext';
+import { getFinancialReport, exportFinancialReport } from '../services/reportsService';
 
 ChartJS.register(
   CategoryScale,
@@ -25,42 +27,112 @@ ChartJS.register(
   Legend
 );
 
+interface ReportData {
+  incomeVsExpenses: {
+    labels: string[];
+    income: number[];
+    expenses: number[];
+  };
+  expenseCategories: {
+    categories: string[];
+    data: number[];
+  };
+  monthlyTrend: {
+    labels: string[];
+    data: number[];
+  };
+}
+
 export default function Reports() {
   const { currency } = useCurrency();
+  const { user } = useAuth();
   const [timeRange, setTimeRange] = useState('This Month');
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const incomeExpenseData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Income',
-        data: [450000, 520000, 480000, 550000, 580000, 600000],
-        backgroundColor: 'rgba(34, 197, 94, 0.5)',
-      },
-      {
-        label: 'Expenses',
-        data: [380000, 420000, 390000, 450000, 460000, 480000],
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-      },
-    ],
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getFinancialReport(user?.id || '');
+        setReportData(response);
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to fetch report data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) {
+      fetchReports();
+    }
+  }, [user]);
+
+  const handleExport = async () => {
+    try {
+      const response = await exportFinancialReport(user?.id || '');
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `financial_report_${user?.id}.csv`);
+      document.body.appendChild(link);
+      link.click();
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to export report data');
+    }
   };
 
-  const categoryData = {
-    labels: ['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping', 'Others'],
-    datasets: [
-      {
-        data: [120000, 80000, 60000, 150000, 90000, 50000],
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.5)',
-          'rgba(234, 179, 8, 0.5)',
-          'rgba(168, 85, 247, 0.5)',
-          'rgba(239, 68, 68, 0.5)',
-          'rgba(34, 197, 94, 0.5)',
-          'rgba(107, 114, 128, 0.5)',
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const incomeExpenseData = reportData
+    ? {
+        labels: reportData?.incomeVsExpenses?.labels || [],
+        datasets: [
+          {
+            label: 'Income',
+            data: reportData?.incomeVsExpenses?.income || [],
+            backgroundColor: 'rgba(34, 197, 94, 0.5)',
+          },
+          {
+            label: 'Expenses',
+            data: reportData?.incomeVsExpenses?.expenses || [],
+            backgroundColor: 'rgba(239, 68, 68, 0.5)',
+          },
         ],
-      },
-    ],
-  };
+      }
+    : {
+        labels: [],
+        datasets: [],
+      };
+
+  const categoryData = reportData
+    ? {
+        labels: reportData?.expenseCategories?.categories || [],
+        datasets: [
+          {
+            data: reportData?.expenseCategories?.data || [],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.5)',
+              'rgba(234, 179, 8, 0.5)',
+              'rgba(168, 85, 247, 0.5)',
+              'rgba(239, 68, 68, 0.5)',
+              'rgba(34, 197, 94, 0.5)',
+              'rgba(107, 114, 128, 0.5)',
+            ],
+          },
+        ],
+      }
+    : {
+        labels: [],
+        datasets: [],
+      };
 
   return (
     <div className="p-6 space-y-6">
@@ -81,7 +153,10 @@ export default function Reports() {
               <option>This Year</option>
             </select>
           </div>
-          <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={handleExport}
+          >
             <Download className="w-5 h-5 mr-2" />
             Export
           </button>
@@ -90,7 +165,7 @@ export default function Reports() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Income vs Expenses</h2>
+          <h2 className="text-lg font-semibold mb-6">Income vs Expenses</h2>
           <Bar
             data={incomeExpenseData}
             options={{
@@ -108,7 +183,7 @@ export default function Reports() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Expenses by Category</h2>
+          <h2 className="text-lg font-semibold mb-6">Expense Categories</h2>
           <Bar
             data={categoryData}
             options={{
@@ -129,19 +204,26 @@ export default function Reports() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-4">Monthly Trend</h2>
         <Line
-          data={{
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [
-              {
-                label: 'Net Income',
-                data: [70000, 100000, 90000, 100000, 120000, 120000],
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4,
-                fill: true,
-              },
-            ],
-          }}
+          data={
+            reportData
+              ? {
+                  labels: reportData?.monthlyTrend?.labels || [],
+                  datasets: [
+                    {
+                      label: 'Net Income',
+                      data: reportData?.monthlyTrend?.data || [],
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      tension: 0.4,
+                      fill: true,
+                    },
+                  ],
+                }
+              : {
+                  labels: [],
+                  datasets: [],
+                }
+          }
           options={{
             responsive: true,
             scales: {
