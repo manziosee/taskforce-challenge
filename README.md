@@ -1,5 +1,3 @@
-Here’s the updated README with the **Hosted URLs** section placed appropriately before the features list and the `.env` configuration included properly:
-
 ```markdown
 # TaskForce Wallet 🚀
 
@@ -8,8 +6,9 @@ TaskForce Wallet is a **personal finance management application** designed to he
 ---
 
 ## Hosted URLs 🌐
-- **Frontend**: [https://taskforce-challenge.onrender.com/api-docs/](https://taskforce-challenge.onrender.com/api-docs/)
-- **Backend**: [https://taskforce-challenge.onrender.com/api-docs/#/Auth](https://taskforce-challenge.onrender.com/api-docs/#/Auth)
+- **Frontend**: https://taskforce-challenge.vercel.app/
+- **Backend**: https://taskforce-challenge.onrender.com/api-docs/
+
 
 ---
 
