@@ -1,6 +1,15 @@
+Here’s the updated README with the **Hosted URLs** section placed appropriately before the features list and the `.env` configuration included properly:
+
+```markdown
 # TaskForce Wallet 🚀
 
 TaskForce Wallet is a **personal finance management application** designed to help users track their income, expenses, budgets, and financial goals. With a clean and intuitive interface, users can manage their finances effectively and gain insights into their spending habits.
+
+---
+
+## Hosted URLs 🌐
+- **Frontend**: [https://taskforce-challenge.onrender.com/api-docs/](https://taskforce-challenge.onrender.com/api-docs/)
+- **Backend**: [https://taskforce-challenge.onrender.com/api-docs/#/Auth](https://taskforce-challenge.onrender.com/api-docs/#/Auth)
 
 ---
 
@@ -65,8 +74,8 @@ TaskForce Wallet is a **personal finance management application** designed to he
 ### Tools
 - **Vite** ⚡
 - **Winston** 📝 (Logging)
-- **Nodemailer** 📧 (Email Notifications)
-- **Docker** 🐳 (Containerization)
+- **Resend** 📧 (Email Notifications)
+
 
 ---
 
@@ -76,11 +85,12 @@ TaskForce Wallet is a **personal finance management application** designed to he
 - Node.js (v16 or higher)
 - MongoDB (local or cloud instance)
 - API key for [Open Exchange Rates](https://openexchangerates.org/)
+- Resend API Key (for email notifications)
 
 ### Steps
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/taskforce-wallet.git
+   git clonehttps://github.com/manziosee/taskforce-challenge.git
    cd taskforce-wallet
    ```
 
@@ -91,12 +101,14 @@ TaskForce Wallet is a **personal finance management application** designed to he
    ```
 
 3. **Set Up Environment Variables**
-   - Create a `.env` file in the `backend` directory:
+   - Create a `.env` file in the `backend` directory with the following content:
      ```env
      PORT=5000
      MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/taskforce-wallet?retryWrites=true&w=majority
      JWT_SECRET=your_jwt_secret_key
      OPEN_EXCHANGE_RATES_API_KEY=your_api_key
+     RESEND_API_KEY=your_api_key
+     EMAIL_FROM=email_address
      ```
 
 4. **Run the Application**
@@ -131,6 +143,7 @@ Run tests using Jest:
 ```bash
 cd backend && npm test
 ```
+
 ## Contributing 🤝
 
 Contributions are welcome! Please follow these steps:
