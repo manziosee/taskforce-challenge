@@ -8,8 +8,9 @@ TaskForce Wallet is a **personal finance management application** designed to he
 ---
 
 ## Hosted URLs 🌐
-- **Frontend**: [https://taskforce-challenge.onrender.com/api-docs/](https://taskforce-challenge.onrender.com/api-docs/)
-- **Backend**: [https://taskforce-challenge.onrender.com/api-docs/#/Auth](https://taskforce-challenge.onrender.com/api-docs/#/Auth)
+- **Frontend**: https://taskforce-challenge.vercel.app/
+- **Backend**: https://taskforce-challenge.onrender.com/api-docs/
+
 
 ---
 

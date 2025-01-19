@@ -17,17 +17,18 @@ const app_1 = __importDefault(require("../app"));
 describe('Budget API', () => {
     let token;
     beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
+        // Login to get a token
         const res = yield (0, supertest_1.default)(app_1.default)
             .post('/api/auth/login')
             .send({
             email: 'test@example.com',
-            password: 'newpassword123',
+            password: 'password123',
         });
         token = res.body.token;
     }));
     it('should get budgets for a user', () => __awaiter(void 0, void 0, void 0, function* () {
         const res = yield (0, supertest_1.default)(app_1.default)
-            .get('/api/budgets/12345')
+            .get('/api/budgets/12345') // Replace with a valid user ID
             .set('Authorization', `Bearer ${token}`);
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body)).toBe(true);
@@ -37,7 +38,7 @@ describe('Budget API', () => {
             .post('/api/budgets')
             .set('Authorization', `Bearer ${token}`)
             .send({
-            userId: '12345',
+            userId: '12345', // Replace with a valid user ID
             category: 'Food',
             limit: 1000,
             period: 'monthly',
@@ -47,7 +48,7 @@ describe('Budget API', () => {
     }));
     it('should update a budget', () => __awaiter(void 0, void 0, void 0, function* () {
         const res = yield (0, supertest_1.default)(app_1.default)
-            .put('/api/budgets/12345')
+            .put('/api/budgets/12345') // Replace with a valid budget ID
             .set('Authorization', `Bearer ${token}`)
             .send({
             spent: 200,

@@ -18,6 +18,7 @@ const User_1 = __importDefault(require("../models/User"));
 const emails_service_1 = __importDefault(require("../service/emails.service"));
 const error_handler_1 = require("../utils/http/error-handler");
 const logger_1 = __importDefault(require("../utils/logger"));
+const BudgetNotificationEmail_1 = __importDefault(require("../emails/BudgetNotificationEmail"));
 const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const budgets = yield Budget_1.default.find({ userId });
@@ -26,7 +27,8 @@ const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
             if (budget.spent > budget.limit) {
                 const message = `Budget exceeded for ${budget.category}. Limit: ${budget.limit}, Spent: ${budget.spent}`;
                 if (user) {
-                    yield emails_service_1.default.sendBudgetNotification(user.email, message);
+                    // Send email notification
+                    yield emails_service_1.default.sendOTP({ to: user.email, subject: 'Budget Exceeded Notification' }, yield (0, BudgetNotificationEmail_1.default)({ message }));
                 }
             }
         }

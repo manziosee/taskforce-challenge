@@ -33,8 +33,9 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         yield (0, email_1.sendEmail)(email, 'Welcome to TaskForce Wallet', code);
         res.status(201).json({ message: 'User registered successfully' });
     }
-    catch (_a) {
-        res.status(500).json({ error: 'Error registering user' });
+    catch (error) {
+        logger_1.default.error(`Error registering user: ${error}`);
+        utils_1.ErrorHandler.handle(new utils_1.HttpError(500, 'Error registering user', 'InternalServerError'), res);
     }
 });
 exports.register = register;
@@ -50,8 +51,9 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     }
-    catch (_a) {
-        res.status(500).json({ error: 'Error logging in' });
+    catch (error) {
+        logger_1.default.error(`Error logging in: ${error}`);
+        utils_1.ErrorHandler.handle(new utils_1.HttpError(500, 'Error logging in', 'InternalServerError'), res);
     }
 });
 exports.login = login;
@@ -70,8 +72,9 @@ const changePassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         yield user.save();
         res.json({ message: 'Password changed successfully' });
     }
-    catch (_a) {
-        res.status(500).json({ error: 'Error changing password' });
+    catch (error) {
+        logger_1.default.error(`Error changing password: ${error}`);
+        utils_1.ErrorHandler.handle(new utils_1.HttpError(500, 'Error changing password', 'InternalServerError'), res);
     }
 });
 exports.changePassword = changePassword;
@@ -82,7 +85,7 @@ const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(400).json({ error: 'No token provided' });
     }
     try {
-        // Add the token to the in-memory blacklist
+        // Add the token to the revoked tokens list
         revokedTokens.add(token);
         logger_1.default.info(`User logged out. Token revoked: ${token}`);
         res.status(200).json({ message: 'Logged out successfully' });
