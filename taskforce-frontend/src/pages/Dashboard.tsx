@@ -64,8 +64,10 @@ export default function Dashboard() {
       setError(null);
       try {
         const response = await getDashboardData(user?.id || '');
+        console.log('Dashboard data:', response); // Debugging line
         setDashboardData(response);
       } catch (error: unknown) {
+        console.error('Error fetching dashboard data:', error); // Debugging line
         setError((error as Error).message || 'Failed to fetch dashboard data');
       } finally {
         setLoading(false);

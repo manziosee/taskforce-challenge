@@ -19,7 +19,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ name, email, password });
-      navigate('/');
+      navigate('/login');
     } catch (err) {
       setError('Registration failed. Please try again.');
       console.error(err);

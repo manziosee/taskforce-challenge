@@ -7,9 +7,11 @@ export const register = async (userData: { name: string; email: string; password
 
 export const login = async (credentials: { email: string; password: string }) => {
   const response = await api.post('/api/auth/login', credentials);
-  return response.data;
+  if (response.data.error) {
+    throw new Error(response.data.error); // Throw error if login fails
+  }
+  return response.data; // Return user data and token on success
 };
-
 export const changePassword = async (passwordData: { currentPassword: string; newPassword: string }) => {
   const response = await api.put('/api/auth/change-password', passwordData);
   return response.data;
@@ -20,6 +22,6 @@ export const logout = async () => {
   return response.data;
 };
 export const updateProfile = async (profileData: { name: string; email: string }) => {
-    const response = await api.put('/api/auth/update-profile', profileData);
-    return response.data;
-  };
+  const response = await api.put('/api/auth/update-profile', profileData);
+  return response.data;
+};

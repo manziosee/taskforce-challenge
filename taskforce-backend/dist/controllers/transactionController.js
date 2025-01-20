@@ -19,6 +19,8 @@ const currency_1 = require("../utils/currency");
 const logger_1 = __importDefault(require("../utils/logger"));
 const addTransaction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, amount, type, category, subcategory, account, date, description } = req.body;
+    // Log the incoming request
+    logger_1.default.info(`Received transaction: ${JSON.stringify(req.body)}`);
     try {
         const transaction = new Transaction_1.default({ userId, amount, type, category, subcategory, account, date, description });
         yield transaction.save();

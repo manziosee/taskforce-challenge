@@ -17,19 +17,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: { email: string; password: string }) => {
     const data = await loginService(credentials);
-    localStorage.setItem('token', data.token);
     setUser(data.user);
-  };
+    localStorage.setItem('token', data.token);
+   };
 
   const register = async (userData: { name: string; email: string; password: string }) => {
-    const data = await registerService(userData);
-    localStorage.setItem('token', data.token);
-    setUser(data.user);
+    await registerService(userData);
+    
   };
 
   const logout = async () => {
     await logoutService();
     localStorage.removeItem('token');
+    localStorage.removeItem('user'); // Clear user data
     setUser(null);
   };
 

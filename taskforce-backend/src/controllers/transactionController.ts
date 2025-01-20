@@ -7,6 +7,9 @@ import logger from '../utils/logger';
 export const addTransaction = async (req: Request, res: Response) => {
   const { userId, amount, type, category, subcategory, account, date, description } = req.body;
 
+  // Log the incoming request
+  logger.info(`Received transaction: ${JSON.stringify(req.body)}`);
+
   try {
     const transaction = new Transaction({ userId, amount, type, category, subcategory, account, date, description });
     await transaction.save();

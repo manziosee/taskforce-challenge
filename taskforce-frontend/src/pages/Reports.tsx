@@ -1,3 +1,4 @@
+// src/pages/Reports.tsx
 import { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
 import { Calendar, Download } from 'lucide-react';
@@ -51,15 +52,16 @@ export default function Reports() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await getFinancialReport(user?.id || '');
+        console.log('Report data:', response); // Debugging line
         setReportData(response);
       } catch (error: unknown) {
+        console.error('Error fetching report data:', error); // Debugging line
         setError((error as Error).message || 'Failed to fetch report data');
       } finally {
         setLoading(false);
