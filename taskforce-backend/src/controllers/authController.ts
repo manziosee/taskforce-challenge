@@ -39,7 +39,10 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
     if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1h' });
-    res.json({ token });
+    res.json({ token, user:{
+      id:user._id,
+      name:user.name,
+      }});
   } catch (error) {
     logger.error(`Error logging in: ${error}`);
     ErrorHandler.handle(new HttpError(500, 'Error logging in', 'InternalServerError'), res);
