@@ -49,7 +49,10 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!isMatch)
             return res.status(400).json({ error: 'Invalid credentials' });
         const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+        res.json({ token, user: {
+                id: user._id,
+                name: user.name,
+            } });
     }
     catch (error) {
         logger_1.default.error(`Error logging in: ${error}`);
