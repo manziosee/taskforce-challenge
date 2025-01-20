@@ -1,4 +1,3 @@
-```markdown
 # TaskForce Wallet 🚀
 
 TaskForce Wallet is a **personal finance management application** designed to help users track their income, expenses, budgets, and financial goals. With a clean and intuitive interface, users can manage their finances effectively and gain insights into their spending habits.
@@ -8,7 +7,6 @@ TaskForce Wallet is a **personal finance management application** designed to he
 ## Hosted URLs 🌐
 - **Frontend**: https://taskforce-challenge.vercel.app/
 - **Backend**: https://taskforce-challenge.onrender.com/api-docs/
-
 
 ---
 
@@ -28,7 +26,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
   - Categorize transactions (e.g., Food, Transport, Entertainment).
   - View transaction history with filters.
 
-- **Category Management** 🗂️
+- **Category Management** 🔂
   - Create and manage categories and subcategories.
   - Update or delete subcategories.
 
@@ -36,7 +34,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
   - Generate detailed financial reports.
   - Export reports as CSV for offline analysis.
 
-- **Dashboard Overview** 🖥️
+- **Dashboard Overview** 🔥
   - Visualize income, expenses, and category-wise spending.
   - Interactive charts for better insights.
 
@@ -52,9 +50,9 @@ TaskForce Wallet is a **personal finance management application** designed to he
 
 ### Frontend
 - **React** ⚛️
-- **TypeScript** 📘
+- **TypeScript** 📘️
 - **Tailwind CSS** 🎨
-- **React Router** 🛣️
+- **React Router** 🔣
 - **Chart.js** 📊
 - **Axios** 🌐
 
@@ -64,7 +62,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
 - **MongoDB** 🍃
 - **Mongoose** 🐪
 - **JWT** 🔑
-- **Swagger** 📄
+- **Swagger** 📝
 
 ### Testing
 - **Jest** 🧪
@@ -74,7 +72,6 @@ TaskForce Wallet is a **personal finance management application** designed to he
 - **Vite** ⚡
 - **Winston** 📝 (Logging)
 - **Resend** 📧 (Email Notifications)
-
 
 ---
 
@@ -89,7 +86,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
 ### Steps
 1. **Clone the Repository**
    ```bash
-   git clonehttps://github.com/manziosee/taskforce-challenge.git
+   git clone https://github.com/manziosee/taskforce-challenge.git
    cd taskforce-wallet
    ```
 
@@ -127,7 +124,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
 
 ---
 
-## API Documentation 📄
+## API Documentation 📝
 
 The API is documented using **Swagger**. You can access the documentation at:
 ```
@@ -176,3 +173,4 @@ For questions or feedback, feel free to reach out:
 ---
 
 Happy budgeting! 💸✨
+
