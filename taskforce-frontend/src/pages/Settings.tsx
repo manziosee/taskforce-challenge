@@ -21,8 +21,8 @@ export default function Settings() {
     newPassword: '',
     confirmPassword: '',
   });
-  const [profileLoading, setProfileLoading] = useState(false); // Add this
-  const [profileError, setProfileError] = useState<string | null>(null); // Add this
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -48,18 +48,26 @@ export default function Settings() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword === passwordData.confirmPassword) {
-      await changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
-      setShowChangePassword(false);
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
+      setProfileLoading(true);
+      setProfileError(null);
+      try {
+        await changePassword({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        });
+        setShowChangePassword(false);
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      } catch (error: unknown) {
+        setProfileError((error as Error).message || 'Failed to change password');
+      } finally {
+        setProfileLoading(false);
+      }
     } else {
-      alert('New password and confirm password do not match');
+      setProfileError('New password and confirm password do not match');
     }
   };
 

@@ -1,6 +1,8 @@
+// src/pages/Budget.tsx
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 import { getBudgets, addBudget, deleteBudget } from '../services/budgetService';
 
 interface Budget {
@@ -13,6 +15,7 @@ interface Budget {
 
 export default function Budgets() {
   const { currency } = useCurrency();
+  const { user } = useAuth(); // Get user from useAuth
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBudget, setNewBudget] = useState({
@@ -27,7 +30,9 @@ export default function Budgets() {
     const fetchBudgets = async () => {
       setLoading(true);
       try {
-        const data = await getBudgets('userId'); // Replace 'userId' with the actual user ID
+        console.log('Fetching budgets for user ID:', user?.id);
+        const data = await getBudgets(user?.id || ''); // Use the actual user ID
+        console.log('Fetched budgets:', data);
         setBudgets(data);
       } catch (err) {
         setError('Failed to fetch budgets');
@@ -37,8 +42,10 @@ export default function Budgets() {
       }
     };
 
-    fetchBudgets();
-  }, []);
+    if (user) {
+      fetchBudgets();
+    }
+  }, [user]);
 
   const handleAddBudget = async (e: React.FormEvent) => {
     e.preventDefault();

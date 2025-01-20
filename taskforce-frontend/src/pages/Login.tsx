@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,15 +13,16 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await login({ email, password });
-      navigate('/');
+      await login({ email, password }); // Call the login function
+      navigate('/'); // Redirect to dashboard on successful login
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError('Login failed. Please check your credentials and try again.'); // Display error message
       console.error(err);
     } finally {
       setLoading(false);

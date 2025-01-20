@@ -16,44 +16,43 @@ const supertest_1 = __importDefault(require("supertest"));
 const app_1 = __importDefault(require("../app"));
 describe('Transaction API', () => {
     let token;
-    let transactionId;
     beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
+        // Login to get a token
         const res = yield (0, supertest_1.default)(app_1.default)
             .post('/api/auth/login')
             .send({
             email: 'test@example.com',
-            password: 'newpassword123',
+            password: 'password123',
         });
         token = res.body.token;
+    }));
+    it('should get transactions for a user', () => __awaiter(void 0, void 0, void 0, function* () {
+        const res = yield (0, supertest_1.default)(app_1.default)
+            .get('/api/transactions/12345') // Replace with a valid user ID
+            .set('Authorization', `Bearer ${token}`);
+        expect(res.status).toBe(200);
+        expect(Array.isArray(res.body)).toBe(true);
     }));
     it('should add a new transaction', () => __awaiter(void 0, void 0, void 0, function* () {
         const res = yield (0, supertest_1.default)(app_1.default)
             .post('/api/transactions')
             .set('Authorization', `Bearer ${token}`)
             .send({
-            userId: '12345',
+            userId: '12345', // Replace with a valid user ID
             amount: 100,
             type: 'expense',
             category: 'Food',
             subcategory: 'Groceries',
-            account: 'Bank Account',
-            date: '2024-01-01',
+            account: 'Bank',
+            date: '2025-01-01',
             description: 'Grocery shopping',
         });
-        transactionId = res.body._id;
         expect(res.status).toBe(201);
-        expect(res.body).toHaveProperty('description', 'Grocery shopping');
-    }));
-    it('should get transactions for a user', () => __awaiter(void 0, void 0, void 0, function* () {
-        const res = yield (0, supertest_1.default)(app_1.default)
-            .get('/api/transactions/12345')
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.status).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body).toHaveProperty('amount', 100);
     }));
     it('should delete a transaction', () => __awaiter(void 0, void 0, void 0, function* () {
         const res = yield (0, supertest_1.default)(app_1.default)
-            .delete(`/api/transactions/${transactionId}`)
+            .delete('/api/transactions/12345') // Replace with a valid transaction ID
             .set('Authorization', `Bearer ${token}`);
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('message', 'Transaction deleted successfully');

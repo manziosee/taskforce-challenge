@@ -5,7 +5,7 @@ import { getTransactions, addTransaction, updateTransaction, deleteTransaction }
 
 interface Transaction {
   id: number;
-  date: string;
+  date: Date;
   description: string;
   category: string;
   account: string;
@@ -17,7 +17,7 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
-    date: '',
+    date: new Date(Date.now()),
     description: '',
     category: '',
     account: '',
@@ -46,27 +46,6 @@ export default function Transactions() {
       fetchTransactions();
     }
   }, [user]);
-
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await addTransaction({
-        ...newTransaction,
-        userId: user?.id || '',
-        amount: Number(newTransaction.amount),
-        type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
-      });
-      setTransactions([...transactions, response]);
-      setShowAddForm(false);
-      setNewTransaction({ date: '', description: '', category: '', account: '', amount: '' });
-    } catch (error: unknown) {
-      setError((error as Error).message || 'Failed to add transaction');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransaction({
@@ -111,6 +90,28 @@ export default function Transactions() {
     }
   };
 
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await addTransaction({
+        ...newTransaction,
+        userId: user?.id || '',
+        amount: Number(newTransaction.amount),
+        type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
+        date: new Date(newTransaction.date), // Ensure date is in the correct format
+      });
+      setTransactions([...transactions, response]);
+      setShowAddForm(false);
+      setNewTransaction({ date: new Date(Date.now()), description: '', category: '', account: '', amount: '' });
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to add transaction');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -137,8 +138,8 @@ export default function Transactions() {
                 <input
                   type="date"
                   id="date"
-                  value={newTransaction.date}
-                  onChange={(e) => setNewTransaction({ ...newTransaction, date: e.target.value })}
+                  value={newTransaction.date.toISOString().split('T')[0]}
+                  onChange={(e) => setNewTransaction({ ...newTransaction, date: new Date(e.target.value) })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   required
                 />
@@ -244,9 +245,9 @@ export default function Transactions() {
                 <input
                   type="date"
                   id="edit-date"
-                  value={editingTransaction.date}
+                  value={editingTransaction.date.toISOString().split('T')[0]}
                   onChange={(e) =>
-                    setEditingTransaction({ ...editingTransaction, date: e.target.value })
+                    setEditingTransaction({ ...editingTransaction, date: new Date(e.target.value) })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   required
@@ -392,7 +393,7 @@ export default function Transactions() {
               {transactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {transaction.date}
+                    {transaction.date.toISOString().split('T')[0]}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                     {transaction.description}

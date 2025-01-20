@@ -14,11 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateBudget = exports.addBudget = exports.getBudgets = exports.checkBudget = void 0;
 const Budget_1 = __importDefault(require("../models/Budget"));
-const User_1 = __importDefault(require("../models/User"));
-const emails_service_1 = __importDefault(require("../service/emails.service"));
 const error_handler_1 = require("../utils/http/error-handler");
 const logger_1 = __importDefault(require("../utils/logger"));
 const BudgetNotificationEmail_1 = __importDefault(require("../emails/BudgetNotificationEmail"));
+const emails_service_1 = __importDefault(require("../service/emails.service"));
+const User_1 = __importDefault(require("../models/User"));
 const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const budgets = yield Budget_1.default.find({ userId });
@@ -39,14 +39,16 @@ const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.checkBudget = checkBudget;
 const getBudgets = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId } = req.params;
+    const userId = req.params.userId;
+    // Log the incoming request
+    logger_1.default.info(`Fetching budgets for user ID: ${userId}`);
     try {
         const budgets = yield Budget_1.default.find({ userId });
-        logger_1.default.info(`Budgets fetched for user: ${userId}`);
-        res.json(budgets);
+        logger_1.default.info(`Fetched budgets for user ID: ${userId}`, budgets);
+        res.status(200).json(budgets);
     }
     catch (error) {
-        logger_1.default.error(`Error fetching budgets: ${error}`);
+        logger_1.default.error(`Error fetching budgets for user ID: ${userId}`, error);
         error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(500, 'Error fetching budgets', 'InternalServerError'), res);
     }
 });

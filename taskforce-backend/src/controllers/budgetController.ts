@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import Budget from '../models/Budget';
-import User from '../models/User';
-import EmailService from '../service/emails.service';
 import { HttpError, ErrorHandler } from '../utils/http/error-handler';
 import logger from '../utils/logger';
 import BudgetNotificationEmail from '../emails/BudgetNotificationEmail';
+import EmailService from '../service/emails.service';
+import User from '../models/User';
 
 export const checkBudget = async (userId: string) => {
   try {
@@ -29,18 +29,20 @@ export const checkBudget = async (userId: string) => {
 };
 
 export const getBudgets = async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  const userId = req.params.userId;
+
+  // Log the incoming request
+  logger.info(`Fetching budgets for user ID: ${userId}`);
 
   try {
     const budgets = await Budget.find({ userId });
-    logger.info(`Budgets fetched for user: ${userId}`);
-    res.json(budgets);
+    logger.info(`Fetched budgets for user ID: ${userId}`, budgets);
+    res.status(200).json(budgets);
   } catch (error) {
-    logger.error(`Error fetching budgets: ${error}`);
+    logger.error(`Error fetching budgets for user ID: ${userId}`, error);
     ErrorHandler.handle(new HttpError(500, 'Error fetching budgets', 'InternalServerError'), res);
   }
 };
-
 export const addBudget = async (req: Request, res: Response) => {
   const { userId, category, limit, period } = req.body;
 

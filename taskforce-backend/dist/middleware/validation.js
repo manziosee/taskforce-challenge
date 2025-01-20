@@ -6,15 +6,15 @@ exports.validateTransaction = [
     (0, express_validator_1.body)('amount').isNumeric().withMessage('Amount must be a number'),
     (0, express_validator_1.body)('type').isIn(['income', 'expense']).withMessage('Type must be income or expense'),
     (0, express_validator_1.body)('category').notEmpty().withMessage('Category is required'),
-    (0, express_validator_1.body)('date').isDate().withMessage('Invalid date'),
+    (0, express_validator_1.body)('date').isISO8601().toDate().withMessage('Invalid date'),
 ];
 const handleValidationErrors = (req, res, next) => {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
-        // Send a response and stop further processing
         res.status(400).json({ errors: errors.array() });
-        return;
     }
-    next();
+    else {
+        next();
+    }
 };
 exports.handleValidationErrors = handleValidationErrors;
