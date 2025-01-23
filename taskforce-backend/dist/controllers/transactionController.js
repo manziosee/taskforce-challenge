@@ -17,8 +17,12 @@ const Transaction_1 = __importDefault(require("../models/Transaction"));
 const error_handler_1 = require("../utils/http/error-handler");
 const currency_1 = require("../utils/currency");
 const logger_1 = __importDefault(require("../utils/logger"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const addTransaction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, amount, type, category, subcategory, account, date, description } = req.body;
+    if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
+        return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Invalid userId', 'ValidationError'), res);
+    }
     // Log the incoming request
     logger_1.default.info(`Received transaction: ${JSON.stringify(req.body)}`);
     try {

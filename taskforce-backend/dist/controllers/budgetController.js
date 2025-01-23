@@ -55,6 +55,10 @@ const getBudgets = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.getBudgets = getBudgets;
 const addBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, category, limit, period } = req.body;
+    // Validate required fields
+    if (!userId || !category || !limit || !period) {
+        return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Missing required fields', 'ValidationError'), res);
+    }
     try {
         const budget = new Budget_1.default({ userId, category, limit, period });
         yield budget.save();
