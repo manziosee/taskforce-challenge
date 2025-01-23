@@ -50,8 +50,16 @@ export default function Budgets() {
   const handleAddBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+  
+    if (!user?.id) {
+      setError('User ID is missing');
+      setLoading(false);
+      return;
+    }
+  
     try {
-      const data = await addBudget(newBudget);
+      const data = await addBudget({ ...newBudget, userId: user.id });
       setBudgets([...budgets, data]);
       setShowAddForm(false);
       setNewBudget({ category: '', limit: 0, period: 'Monthly' });
