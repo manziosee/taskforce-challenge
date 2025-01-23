@@ -12,7 +12,6 @@ interface Transaction {
   amount: number;
   type: 'income' | 'expense';
 }
-
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -94,6 +93,7 @@ export default function Transactions() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+  
     try {
       const response = await addTransaction({
         ...newTransaction,
@@ -102,9 +102,21 @@ export default function Transactions() {
         type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
         date: new Date(newTransaction.date),
       });
-      setTransactions([...transactions, response]);
-      setShowAddForm(false);
-      setNewTransaction({ date: new Date(Date.now()), description: '', category: '', account: '', amount: '' });
+  
+      // Ensure the response contains the correct data
+      if (response && response.id) {
+        setTransactions([...transactions, response]);
+        setShowAddForm(false);
+        setNewTransaction({
+          date: new Date(Date.now()),
+          description: '',
+          category: '',
+          account: '',
+          amount: '',
+        });
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (error: unknown) {
       setError((error as Error).message || 'Failed to add transaction');
       console.error('Error adding transaction:', error);
