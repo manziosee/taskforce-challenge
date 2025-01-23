@@ -8,13 +8,6 @@ import mongoose from 'mongoose';
 export const addTransaction = async (req: Request, res: Response) => {
   const { userId, amount, type, category, subcategory, account, date, description } = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    return ErrorHandler.handle(new HttpError(400, 'Invalid userId', 'ValidationError'), res);
-  }
-
-  // Log the incoming request
-  logger.info(`Received transaction: ${JSON.stringify(req.body)}`);
-
   try {
     const transaction = new Transaction({ userId, amount, type, category, subcategory, account, date, description });
     await transaction.save();

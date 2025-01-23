@@ -29,11 +29,15 @@ export default function Budgets() {
   useEffect(() => {
     const fetchBudgets = async () => {
       setLoading(true);
+      setError('');
+  
       try {
-        console.log('Fetching budgets for user ID:', user?.id);
-        const data = await getBudgets(user?.id || ''); // Use the actual user ID
-        console.log('Fetched budgets:', data);
+        const data = await getBudgets(user?.id || '');
+        console.log('Fetched budgets:', data); // Debugging line
         setBudgets(data);
+  
+        // Debugging log for budgets state
+        console.log('Budgets state:', data);
       } catch (err) {
         setError('Failed to fetch budgets');
         console.error(err);
@@ -41,7 +45,7 @@ export default function Budgets() {
         setLoading(false);
       }
     };
-
+  
     if (user) {
       fetchBudgets();
     }

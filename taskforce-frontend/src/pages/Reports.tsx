@@ -57,6 +57,12 @@ export default function Reports() {
       setLoading(true);
       setError(null);
       try {
+        const startDate = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(); // Last month
+        const endDate = new Date().toISOString(); // Current date
+  
+        // Debugging log
+        console.log('Fetching report for user:', user?.id, 'with startDate:', startDate, 'and endDate:', endDate);
+  
         const response = await getFinancialReport(user?.id || '');
         console.log('Report data:', response); // Debugging line
         setReportData(response);
