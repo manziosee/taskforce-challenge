@@ -9,6 +9,13 @@ export const generateReport = async (req: Request, res: Response) => {
   const { userId } = req.params;
   const { startDate, endDate } = req.query;
 
+  if (!startDate || !endDate) {
+    return ErrorHandler.handle(
+      new HttpError(400, 'Missing startDate or endDate', 'ValidationError'),
+      res
+    );
+  }
+
   try {
     const transactions = await Transaction.find({
       userId,
@@ -20,13 +27,23 @@ export const generateReport = async (req: Request, res: Response) => {
     res.json({ transactions, budgets });
   } catch (error) {
     logger.error(`Error generating report: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error generating report', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error generating report', 'InternalServerError'),
+      res
+    );
   }
 };
 
 export const exportReport = async (req: Request, res: Response) => {
   const { userId } = req.params;
   const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return ErrorHandler.handle(
+      new HttpError(400, 'Missing startDate or endDate', 'ValidationError'),
+      res
+    );
+  }
 
   try {
     const transactions = await Transaction.find({
@@ -40,6 +57,9 @@ export const exportReport = async (req: Request, res: Response) => {
     res.send(csvData);
   } catch (error) {
     logger.error(`Error exporting report: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error exporting report', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error exporting report', 'InternalServerError'),
+      res
+    );
   }
 };

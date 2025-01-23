@@ -46,6 +46,14 @@ export const getBudgets = async (req: Request, res: Response) => {
 export const addBudget = async (req: Request, res: Response) => {
   const { userId, category, limit, period } = req.body;
 
+  // Validate required fields
+  if (!userId || !category || !limit || !period) {
+    return ErrorHandler.handle(
+      new HttpError(400, 'Missing required fields', 'ValidationError'),
+      res
+    );
+  }
+
   try {
     const budget = new Budget({ userId, category, limit, period });
     await budget.save();
@@ -53,10 +61,12 @@ export const addBudget = async (req: Request, res: Response) => {
     res.status(201).json(budget);
   } catch (error) {
     logger.error(`Error adding budget: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error adding budget', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error adding budget', 'InternalServerError'),
+      res
+    );
   }
 };
-
 export const updateBudget = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { spent } = req.body;

@@ -5,7 +5,12 @@ export const getBudgets = async (userId: string) => {
   return response.data;
 };
 
-export const addBudget = async (budgetData: { category: string; limit: number; period: string }) => {
+export const addBudget = async (budgetData: {
+  userId: string;
+  category: string;
+  limit: number;
+  period: string;
+}) => {
   const response = await api.post('/api/budgets', budgetData);
   return response.data;
 };

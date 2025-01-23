@@ -21,6 +21,9 @@ const logger_1 = __importDefault(require("../utils/logger"));
 const generateReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
     const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+        return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Missing startDate or endDate', 'ValidationError'), res);
+    }
     try {
         const transactions = yield Transaction_1.default.find({
             userId,
@@ -38,6 +41,9 @@ exports.generateReport = generateReport;
 const exportReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
     const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+        return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Missing startDate or endDate', 'ValidationError'), res);
+    }
     try {
         const transactions = yield Transaction_1.default.find({
             userId,

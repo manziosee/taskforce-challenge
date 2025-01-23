@@ -100,13 +100,14 @@ export default function Transactions() {
         userId: user?.id || '',
         amount: Number(newTransaction.amount),
         type: Number(newTransaction.amount) > 0 ? 'income' : 'expense',
-        date: new Date(newTransaction.date), // Ensure date is in the correct format
+        date: new Date(newTransaction.date),
       });
       setTransactions([...transactions, response]);
       setShowAddForm(false);
       setNewTransaction({ date: new Date(Date.now()), description: '', category: '', account: '', amount: '' });
     } catch (error: unknown) {
       setError((error as Error).message || 'Failed to add transaction');
+      console.error('Error adding transaction:', error);
     } finally {
       setLoading(false);
     }

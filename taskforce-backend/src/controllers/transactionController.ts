@@ -3,9 +3,14 @@ import Transaction from '../models/Transaction';
 import { HttpError, ErrorHandler } from '../utils/http/error-handler';
 import { convertCurrency } from '../utils/currency';
 import logger from '../utils/logger';
+import mongoose from 'mongoose';
 
 export const addTransaction = async (req: Request, res: Response) => {
   const { userId, amount, type, category, subcategory, account, date, description } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return ErrorHandler.handle(new HttpError(400, 'Invalid userId', 'ValidationError'), res);
+  }
 
   // Log the incoming request
   logger.info(`Received transaction: ${JSON.stringify(req.body)}`);
