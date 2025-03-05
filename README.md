@@ -118,9 +118,9 @@ TaskForce Wallet is a **personal finance management application** designed to he
      ```
 
 5. **Access the Application**
-   - Frontend: `http://localhost:3000`
+   - Frontend: `https://taskforce-challenge.vercel.app`
    - Backend API: `http://localhost:5000`
-   - Swagger Docs: `http://localhost:5000/api-docs`
+   - Swagger Docs: `https://taskforce-challenge.onrender.com/api-docs/`
 
 ---
 
@@ -128,7 +128,7 @@ TaskForce Wallet is a **personal finance management application** designed to he
 
 The API is documented using **Swagger**. You can access the documentation at:
 ```
-[http://localhost:5000/api-docs](https://taskforce-challenge.onrender.com/api-docs/)
+https://taskforce-challenge.onrender.com/api-docs/
 ```
 
 ---
