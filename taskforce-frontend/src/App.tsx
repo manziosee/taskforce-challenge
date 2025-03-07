@@ -7,6 +7,7 @@ import { CurrencyProvider } from './context/CurrencyContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useTheme } from './hooks/useTheme';
 import { SessionTimeout } from './components/SessionTimeout';
+import Landing from './pages/Landing';
 
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -38,10 +39,11 @@ export default function App() {
               <SessionTimeout />
               <Suspense fallback={<div>Loading...</div>}>
                 <Routes>
+                  <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route
-                    path="/*"
+                    path="/dashboard/*"
                     element={
                       <ProtectedRoute>
                         <div className="flex h-screen">

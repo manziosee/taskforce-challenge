@@ -1,4 +1,3 @@
-// src/pages/Budget.tsx
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
