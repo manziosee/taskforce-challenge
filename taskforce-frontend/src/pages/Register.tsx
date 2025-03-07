@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Shield, User, Mail, Lock, Eye, EyeOff, Coins } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
@@ -38,13 +38,23 @@ export default function Register() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 p-12 text-white items-center justify-center">
         <div className="max-w-lg">
           <div className="flex items-center space-x-3 mb-8">
-            <Shield className="w-12 h-12" />
-            <span className="text-3xl font-bold">TaskForce Wallet</span>
+            <Coins className="w-12 h-12" />
+            <span className="text-3xl font-bold">Prospero</span>
           </div>
           <h2 className="text-4xl font-bold mb-6">Start your financial journey</h2>
           <p className="text-lg text-blue-100">
-            Join thousands of users who trust TaskForce Wallet to manage their finances and achieve their goals.
+            Join thousands of users who trust Prospero to manage their finances and achieve their goals.
           </p>
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center space-x-3 bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+              <Shield className="w-6 h-6 text-blue-300" />
+              <p className="text-sm">Bank-grade security protection</p>
+            </div>
+            <div className="flex items-center space-x-3 bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+              <User className="w-6 h-6 text-blue-300" />
+              <p className="text-sm">Join our community of 10,000+ users</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -53,14 +63,18 @@ export default function Register() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-6 lg:hidden">
-              <Shield className="w-10 h-10 text-blue-600" />
-              <span className="text-2xl font-bold">TaskForce Wallet</span>
+              <Coins className="w-10 h-10 text-blue-600" />
+              <span className="text-2xl font-bold">Prospero</span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Create your account</h2>
             <p className="mt-2 text-gray-600 dark:text-gray-400">Start managing your finances today</p>
           </div>
 
-          {error && <div className="text-red-500 text-center">{error}</div>}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-lg text-center">
+              {error}
+            </div>
+          )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
@@ -124,9 +138,17 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onClick={togglePasswordVisibility}>
-                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -135,9 +157,16 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Creating account...' : 'Create account'}
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                    Creating account...
+                  </div>
+                ) : (
+                  'Create account'
+                )}
               </button>
             </div>
 
