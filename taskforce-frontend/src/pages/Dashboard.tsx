@@ -64,10 +64,10 @@ export default function Dashboard() {
       setError(null);
       try {
         const response = await getDashboardData(user?.id || '');
-        console.log('Dashboard data:', response); // Debugging line
+        console.log('Dashboard data:', response);
         setDashboardData(response);
       } catch (error: unknown) {
-        console.error('Error fetching dashboard data:', error); // Debugging line
+        console.error('Error fetching dashboard data:', error);
         setError((error as Error).message || 'Failed to fetch dashboard data');
       } finally {
         setLoading(false);
@@ -79,10 +79,21 @@ export default function Dashboard() {
   }, [user]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
   }
+
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-6 rounded-lg">
+          {error}
+        </div>
+      </div>
+    );
   }
 
   const lineChartData = dashboardData
@@ -137,15 +148,20 @@ export default function Dashboard() {
   const recentTransactions = dashboardData?.recentTransactions || [];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back, {user?.name || 'User'}!</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+            Welcome back, {user?.name || 'User'}!
+          </h1>
           <p className="text-gray-600 dark:text-gray-400">Here's your financial overview</p>
         </div>
-        <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700">
-          <Calendar className="w-5 h-5 text-gray-500" />
-          <select aria-label="Time Range" className="bg-transparent border-none focus:ring-0 text-sm">
+        <div className="flex items-center space-x-2 glass-effect rounded-lg px-4 py-2">
+          <Calendar className="w-5 h-5 text-primary-500" />
+          <select
+            aria-label="Time Range"
+            className="bg-transparent border-none focus:ring-0 text-sm"
+          >
             <option>{timeRange}</option>
             <option>Last Month</option>
             <option>Last 3 Months</option>
@@ -155,42 +171,50 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg text-white">
+        <div className="hover-card gradient-primary p-6 rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white/20 rounded-lg">
               <Wallet className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Total Balance</span>
+            <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
+              Total Balance
+            </span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalBalance?.toLocaleString()}</p>
+          <p className="text-3xl font-bold mb-1">
+            {currency} {dashboardData?.totalBalance?.toLocaleString()}
+          </p>
           <p className="text-sm text-blue-100">Across all accounts</p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-lg text-white">
+        <div className="hover-card gradient-success p-6 rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white/20 rounded-lg">
               <CreditCard className="w-6 h-6" />
             </div>
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Income</span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalIncome?.toLocaleString()}</p>
+          <p className="text-3xl font-bold mb-1">
+            {currency} {dashboardData?.totalIncome?.toLocaleString()}
+          </p>
           <p className="text-sm text-green-100">{dashboardData?.incomeChange}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl shadow-lg text-white">
+        <div className="hover-card gradient-danger p-6 rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white/20 rounded-lg">
               <Banknote className="w-6 h-6" />
             </div>
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Expenses</span>
           </div>
-          <p className="text-3xl font-bold mb-1">{currency} {dashboardData?.totalExpenses?.toLocaleString()}</p>
+          <p className="text-3xl font-bold mb-1">
+            {currency} {dashboardData?.totalExpenses?.toLocaleString()}
+          </p>
           <p className="text-sm text-red-100">{dashboardData?.expensePercentage}% of monthly budget</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
           <h2 className="text-lg font-semibold mb-6">Income vs Expenses</h2>
           <Line
             data={lineChartData}
@@ -212,7 +236,7 @@ export default function Dashboard() {
             }}
           />
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
           <h2 className="text-lg font-semibold mb-6">Expense Categories</h2>
           <Pie
             data={pieChartData}
@@ -228,10 +252,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+      <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold">Recent Transactions</h2>
-          <button className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+          <button className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
             View all
           </button>
         </div>
@@ -239,7 +263,7 @@ export default function Dashboard() {
           {recentTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center space-x-4">
                 <div
@@ -263,7 +287,9 @@ export default function Dashboard() {
               <div className="text-right">
                 <p
                   className={`font-medium ${
-                    transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                    transaction.amount > 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
                   }`}
                 >
                   {transaction.amount > 0 ? '+' : ''}
