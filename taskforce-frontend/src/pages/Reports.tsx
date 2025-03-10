@@ -1,4 +1,3 @@
-// src/pages/Reports.tsx
 import { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
 import { Calendar, Download } from 'lucide-react';
@@ -57,17 +56,9 @@ export default function Reports() {
       setLoading(true);
       setError(null);
       try {
-        const startDate = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(); // Last month
-        const endDate = new Date().toISOString(); // Current date
-  
-        // Debugging log
-        console.log('Fetching report for user:', user?.id, 'with startDate:', startDate, 'and endDate:', endDate);
-  
         const response = await getFinancialReport(user?.id || '');
-        console.log('Report data:', response); // Debugging line
         setReportData(response);
       } catch (error: unknown) {
-        console.error('Error fetching report data:', error); // Debugging line
         setError((error as Error).message || 'Failed to fetch report data');
       } finally {
         setLoading(false);
@@ -93,62 +84,32 @@ export default function Reports() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
   }
+
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-6 rounded-lg">
+          {error}
+        </div>
+      </div>
+    );
   }
-
-  const incomeExpenseData = reportData
-    ? {
-        labels: reportData?.incomeVsExpenses?.labels || [],
-        datasets: [
-          {
-            label: 'Income',
-            data: reportData?.incomeVsExpenses?.income || [],
-            backgroundColor: 'rgba(34, 197, 94, 0.5)',
-          },
-          {
-            label: 'Expenses',
-            data: reportData?.incomeVsExpenses?.expenses || [],
-            backgroundColor: 'rgba(239, 68, 68, 0.5)',
-          },
-        ],
-      }
-    : {
-        labels: [],
-        datasets: [],
-      };
-
-  const categoryData = reportData
-    ? {
-        labels: reportData?.expenseCategories?.categories || [],
-        datasets: [
-          {
-            data: reportData?.expenseCategories?.data || [],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.5)',
-              'rgba(234, 179, 8, 0.5)',
-              'rgba(168, 85, 247, 0.5)',
-              'rgba(239, 68, 68, 0.5)',
-              'rgba(34, 197, 94, 0.5)',
-              'rgba(107, 114, 128, 0.5)',
-            ],
-          },
-        ],
-      }
-    : {
-        labels: [],
-        datasets: [],
-      };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Financial Reports</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+          Financial Reports
+        </h1>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700">
-            <Calendar className="w-5 h-5 text-gray-500" />
+          <div className="flex items-center space-x-2 glass-effect rounded-lg px-4 py-2">
+            <Calendar className="w-5 h-5 text-primary-500" />
             <select
               aria-label="Select Time Range"
               className="bg-transparent border-none focus:ring-0 text-sm"
@@ -162,7 +123,7 @@ export default function Reports() {
             </select>
           </div>
           <button
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="button-hover inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             onClick={handleExport}
           >
             <Download className="w-5 h-5 mr-2" />
@@ -172,10 +133,24 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
           <h2 className="text-lg font-semibold mb-6">Income vs Expenses</h2>
           <Bar
-            data={incomeExpenseData}
+            data={{
+              labels: reportData?.incomeVsExpenses?.labels || [],
+              datasets: [
+                {
+                  label: 'Income',
+                  data: reportData?.incomeVsExpenses?.income || [],
+                  backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                },
+                {
+                  label: 'Expenses',
+                  data: reportData?.incomeVsExpenses?.expenses || [],
+                  backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                },
+              ],
+            }}
             options={{
               responsive: true,
               scales: {
@@ -190,10 +165,25 @@ export default function Reports() {
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
           <h2 className="text-lg font-semibold mb-6">Expense Categories</h2>
           <Bar
-            data={categoryData}
+            data={{
+              labels: reportData?.expenseCategories?.categories || [],
+              datasets: [
+                {
+                  data: reportData?.expenseCategories?.data || [],
+                  backgroundColor: [
+                    'rgba(59, 130, 246, 0.5)',
+                    'rgba(234, 179, 8, 0.5)',
+                    'rgba(168, 85, 247, 0.5)',
+                    'rgba(239, 68, 68, 0.5)',
+                    'rgba(34, 197, 94, 0.5)',
+                    'rgba(107, 114, 128, 0.5)',
+                  ],
+                },
+              ],
+            }}
             options={{
               responsive: true,
               scales: {
@@ -209,29 +199,22 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">Monthly Trend</h2>
+      <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+        <h2 className="text-lg font-semibold mb-6">Monthly Trend</h2>
         <Line
-          data={
-            reportData
-              ? {
-                  labels: reportData?.monthlyTrend?.labels || [],
-                  datasets: [
-                    {
-                      label: 'Net Income',
-                      data: reportData?.monthlyTrend?.data || [],
-                      borderColor: 'rgb(59, 130, 246)',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      tension: 0.4,
-                      fill: true,
-                    },
-                  ],
-                }
-              : {
-                  labels: [],
-                  datasets: [],
-                }
-          }
+          data={{
+            labels: reportData?.monthlyTrend?.labels || [],
+            datasets: [
+              {
+                label: 'Net Income',
+                data: reportData?.monthlyTrend?.data || [],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          }}
           options={{
             responsive: true,
             scales: {
