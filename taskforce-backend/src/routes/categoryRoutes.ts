@@ -1,7 +1,6 @@
-// src/routes/categoryRoutes.ts
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { getCategories, addCategory, deleteCategory, updateSubcategory, deleteSubcategory } from '../controllers/categoryController';
+import { getCategories, addCategory, deleteCategory, updateCategory, updateSubcategory, deleteSubcategory } from '../controllers/categoryController';
 import { ErrorHandler } from '../utils/http/error-handler';
 
 const router = express.Router();
@@ -98,6 +97,45 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await deleteCategory(req, res);
+  } catch (error) {
+    ErrorHandler.handle(error as Error, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/categories/{id}:
+ *   put:
+ *     summary: Update a category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Category updated successfully
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Error updating category
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    await updateCategory(req, res);
   } catch (error) {
     ErrorHandler.handle(error as Error, res);
   }

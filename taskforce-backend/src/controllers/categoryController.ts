@@ -46,6 +46,22 @@ export const deleteCategory = async (req: Request, res: Response) => {
   }
 };
 
+export const updateCategory = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  try {
+    const category = await Category.findByIdAndUpdate(id, { name }, { new: true });
+    if (!category) {
+      return ErrorHandler.handle(new HttpError(404, 'Category not found', 'NotFoundError'), res);
+    }
+    res.json(category);
+  } catch (error) {
+    logger.error(`Error updating category: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error updating category', 'InternalServerError'), res);
+  }
+};
+
 export const updateSubcategory = async (req: Request, res: Response) => {
   const { id, subcategoryIndex } = req.params;
   const { value } = req.body;
