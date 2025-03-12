@@ -122,4 +122,34 @@ router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         error_handler_1.ErrorHandler.handle(error, res);
     }
 }));
+/**
+ * @swagger
+ * /api/budgets/{id}:
+ *   delete:
+ *     summary: Delete a budget
+ *     tags: [Budgets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Budget deleted successfully
+ *       404:
+ *         description: Budget not found
+ *       500:
+ *         description: Error deleting budget
+ */
+router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, budgetController_1.deleteBudget)(req, res);
+    }
+    catch (error) {
+        error_handler_1.ErrorHandler.handle(error, res);
+    }
+}));
 exports.default = router;
