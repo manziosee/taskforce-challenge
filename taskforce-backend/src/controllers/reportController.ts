@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import Transaction from '../models/Transaction';
-import Budget from '../models/Budget';
 import { generateCSV } from '../utils/csvExport';
 import { HttpError, ErrorHandler } from '../utils/http/error-handler';
 import logger from '../utils/logger';

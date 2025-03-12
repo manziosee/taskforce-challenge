@@ -1,4 +1,3 @@
-// src/routes/reportRoutes.ts
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { generateReport, exportReport } from '../controllers/reportController';
