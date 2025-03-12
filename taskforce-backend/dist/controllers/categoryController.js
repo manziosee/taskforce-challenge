@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteSubcategory = exports.updateSubcategory = exports.deleteCategory = exports.addCategory = exports.getCategories = void 0;
+exports.deleteSubcategory = exports.updateSubcategory = exports.updateCategory = exports.deleteCategory = exports.addCategory = exports.getCategories = void 0;
 const Category_1 = __importDefault(require("../models/Category"));
 const error_handler_1 = require("../utils/http/error-handler");
 const logger_1 = __importDefault(require("../utils/logger"));
@@ -59,6 +59,22 @@ const deleteCategory = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.deleteCategory = deleteCategory;
+const updateCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { name } = req.body;
+    try {
+        const category = yield Category_1.default.findByIdAndUpdate(id, { name }, { new: true });
+        if (!category) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Category not found', 'NotFoundError'), res);
+        }
+        res.json(category);
+    }
+    catch (error) {
+        logger_1.default.error(`Error updating category: ${error}`);
+        error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(500, 'Error updating category', 'InternalServerError'), res);
+    }
+});
+exports.updateCategory = updateCategory;
 const updateSubcategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id, subcategoryIndex } = req.params;
     const { value } = req.body;

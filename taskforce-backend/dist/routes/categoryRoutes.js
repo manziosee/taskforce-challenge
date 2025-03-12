@@ -12,7 +12,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/routes/categoryRoutes.ts
 const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const categoryController_1 = require("../controllers/categoryController");
@@ -109,6 +108,45 @@ router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield (0, categoryController_1.deleteCategory)(req, res);
+    }
+    catch (error) {
+        error_handler_1.ErrorHandler.handle(error, res);
+    }
+}));
+/**
+ * @swagger
+ * /api/categories/{id}:
+ *   put:
+ *     summary: Update a category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Category updated successfully
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Error updating category
+ */
+router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, categoryController_1.updateCategory)(req, res);
     }
     catch (error) {
         error_handler_1.ErrorHandler.handle(error, res);

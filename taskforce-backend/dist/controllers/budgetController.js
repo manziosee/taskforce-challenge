@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateBudget = exports.addBudget = exports.getBudgets = exports.checkBudget = void 0;
+exports.deleteBudget = exports.updateBudget = exports.addBudget = exports.getBudgets = exports.checkBudget = void 0;
 const Budget_1 = __importDefault(require("../models/Budget"));
 const error_handler_1 = require("../utils/http/error-handler");
 const logger_1 = __importDefault(require("../utils/logger"));
@@ -73,9 +73,9 @@ const addBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.addBudget = addBudget;
 const updateBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { spent } = req.body;
+    const updateData = req.body;
     try {
-        const budget = yield Budget_1.default.findByIdAndUpdate(id, { spent }, { new: true });
+        const budget = yield Budget_1.default.findByIdAndUpdate(id, updateData, { new: true });
         if (!budget) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Budget not found', 'NotFoundError'), res);
         }
@@ -88,3 +88,19 @@ const updateBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.updateBudget = updateBudget;
+const deleteBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    try {
+        const budget = yield Budget_1.default.findByIdAndDelete(id);
+        if (!budget) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Budget not found', 'NotFoundError'), res);
+        }
+        logger_1.default.info(`Budget deleted: ${id}`);
+        res.json({ message: 'Budget deleted successfully' });
+    }
+    catch (error) {
+        logger_1.default.error(`Error deleting budget: ${error}`);
+        error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(500, 'Error deleting budget', 'InternalServerError'), res);
+    }
+});
+exports.deleteBudget = deleteBudget;
