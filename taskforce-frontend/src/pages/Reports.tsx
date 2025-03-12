@@ -79,7 +79,8 @@ export default function Reports() {
       document.body.appendChild(link);
       link.click();
     } catch (error: unknown) {
-      setError((error as Error).message || 'Failed to export report data');
+      console.error('Error exporting report:', error);
+      setError('Failed to export report');
     }
   };
 

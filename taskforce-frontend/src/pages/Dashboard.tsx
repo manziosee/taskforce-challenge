@@ -28,26 +28,13 @@ ChartJS.register(
 );
 
 interface DashboardData {
-  incomeVsExpenses: {
-    income: number[];
-    expenses: number[];
-  };
-  expenseCategories: {
-    categories: string[];
-    data: number[];
-  };
-  recentTransactions: {
-    id: number;
-    description: string;
-    amount: number;
-    date: string;
-    category: string;
+  income: number;
+  expenses: number;
+  categorySpending: {
+    name: string;
+    total: number;
+    id: string;
   }[];
-  totalBalance: number;
-  totalIncome: number;
-  totalExpenses: number;
-  incomeChange: string;
-  expensePercentage: number;
 }
 
 export default function Dashboard() {
@@ -102,7 +89,7 @@ export default function Dashboard() {
         datasets: [
           {
             label: 'Income',
-            data: dashboardData?.incomeVsExpenses?.income || [],
+            data: dashboardData?.income || [],
             borderColor: 'rgb(34, 197, 94)',
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
             tension: 0.4,
@@ -110,7 +97,7 @@ export default function Dashboard() {
           },
           {
             label: 'Expenses',
-            data: dashboardData?.incomeVsExpenses?.expenses || [],
+            data: dashboardData?.expenses || [],
             borderColor: 'rgb(239, 68, 68)',
             backgroundColor: 'rgba(239, 68, 68, 0.1)',
             tension: 0.4,
@@ -125,10 +112,10 @@ export default function Dashboard() {
 
   const pieChartData = dashboardData
     ? {
-        labels: dashboardData?.expenseCategories?.categories || [],
+        labels: dashboardData?.categorySpending?.map(category => category.name) || [],
         datasets: [
           {
-            data: dashboardData?.expenseCategories?.data || [],
+            data: dashboardData?.categorySpending?.map(category => category.total) || [],
             backgroundColor: [
               'rgb(59, 130, 246)',
               'rgb(234, 179, 8)',
@@ -145,7 +132,7 @@ export default function Dashboard() {
         datasets: [],
       };
 
-  const recentTransactions = dashboardData?.recentTransactions || [];
+  const recentTransactions = dashboardData?.categorySpending || [];
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -181,7 +168,7 @@ export default function Dashboard() {
             </span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.totalBalance?.toLocaleString()}
+            {currency} {dashboardData?.income?.toLocaleString()}
           </p>
           <p className="text-sm text-blue-100">Across all accounts</p>
         </div>
@@ -194,9 +181,9 @@ export default function Dashboard() {
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Income</span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.totalIncome?.toLocaleString()}
+            {currency} {dashboardData?.income?.toLocaleString()}
           </p>
-          <p className="text-sm text-green-100">{dashboardData?.incomeChange}</p>
+          <p className="text-sm text-green-100">{dashboardData?.income}</p>
         </div>
 
         <div className="hover-card gradient-danger p-6 rounded-2xl shadow-lg text-white">
@@ -207,9 +194,9 @@ export default function Dashboard() {
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Expenses</span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.totalExpenses?.toLocaleString()}
+            {currency} {dashboardData?.expenses?.toLocaleString()}
           </p>
-          <p className="text-sm text-red-100">{dashboardData?.expensePercentage}% of monthly budget</p>
+          <p className="text-sm text-red-100">{dashboardData?.expenses}% of monthly budget</p>
         </div>
       </div>
 
@@ -268,34 +255,34 @@ export default function Dashboard() {
               <div className="flex items-center space-x-4">
                 <div
                   className={`p-2 rounded-lg ${
-                    transaction.amount > 0
+                    transaction.total > 0
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                   }`}
                 >
-                  {transaction.amount > 0 ? (
+                  {transaction.total > 0 ? (
                     <ArrowUpRight className="w-5 h-5" />
                   ) : (
                     <ArrowDownRight className="w-5 h-5" />
                   )}
                 </div>
                 <div>
-                  <p className="font-medium">{transaction.description}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category}</p>
+                  <p className="font-medium">{transaction.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.total}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p
                   className={`font-medium ${
-                    transaction.amount > 0
+                    transaction.total > 0
                       ? 'text-green-600 dark:text-green-400'
                       : 'text-red-600 dark:text-red-400'
                   }`}
                 >
-                  {transaction.amount > 0 ? '+' : ''}
-                  {currency} {Math.abs(transaction.amount).toLocaleString()}
+                  {transaction.total > 0 ? '+' : ''}
+                  {currency} {Math.abs(transaction.total).toLocaleString()}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.date}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.total}</p>
               </div>
             </div>
           ))}
