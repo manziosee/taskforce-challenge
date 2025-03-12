@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { getBudgets, addBudget, updateBudget } from '../controllers/budgetController';
+import { getBudgets, addBudget, updateBudget, deleteBudget } from '../controllers/budgetController';
 import { ErrorHandler } from '../utils/http/error-handler';
 
 const router = express.Router();
@@ -106,6 +106,36 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     await updateBudget(req, res);
+  } catch (error) {
+    ErrorHandler.handle(error as Error, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/budgets/{id}:
+ *   delete:
+ *     summary: Delete a budget
+ *     tags: [Budgets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Budget deleted successfully
+ *       404:
+ *         description: Budget not found
+ *       500:
+ *         description: Error deleting budget
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    await deleteBudget(req, res);
   } catch (error) {
     ErrorHandler.handle(error as Error, res);
   }
