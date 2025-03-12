@@ -316,13 +316,12 @@ export default function Categories() {
                 </label>
                 <input
                   type="text"
-                  value={newCategory.subcategories}
-                  onChange={(e) => setNewCategory({ ...newCategory, subcategories: e.target.value })}
+                  value={editingCategoryName.name}
+                  onChange={(e) => setEditingCategoryName({ ...editingCategoryName, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="e.g., Groceries, Restaurants, Fast Food"
-                  title="Subcategories"
+                  placeholder="Enter category name"
                   required
-                  />
+                />
               </div>
               <div className="flex justify-end space-x-4">
                 <button
@@ -364,7 +363,6 @@ export default function Categories() {
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Enter subcategory name"
-                  title="Subcategory Name"
                   required
                 />
               </div>
