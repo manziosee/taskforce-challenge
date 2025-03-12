@@ -11,12 +11,35 @@ export const addBudget = async (budgetData: {
   limit: number;
   period: string;
 }) => {
-  const response = await api.post('/api/budgets', budgetData);
+  // Convert period to lowercase to match backend enum
+  const formattedPeriod = budgetData.period.toLowerCase();
+  
+  // Adjust the data to match backend expectations
+  const payload = {
+    userId: budgetData.userId,
+    category: budgetData.category,
+    limit: budgetData.limit,
+    period: formattedPeriod === 'monthly' ? 'monthly' : 
+            formattedPeriod === 'weekly' ? 'weekly' : 'yearly'
+  };
+  
+  const response = await api.post('/api/budgets', payload);
   return response.data;
 };
 
-export const updateBudget = async (id: string, budgetData: { category: string; limit: number; period: string }) => {
-  const response = await api.put(`/api/budgets/${id}`, budgetData);
+export const updateBudget = async (id: string, budgetData: { 
+  category?: string; 
+  limit?: number; 
+  period?: string; 
+  spent?: number 
+}) => {
+  // Convert period to lowercase if it exists
+  const payload = { ...budgetData };
+  if (payload.period) {
+    payload.period = payload.period.toLowerCase();
+  }
+  
+  const response = await api.put(`/api/budgets/${id}`, payload);
   return response.data;
 };
 

@@ -43,6 +43,7 @@ export const getBudgets = async (req: Request, res: Response) => {
     ErrorHandler.handle(new HttpError(500, 'Error fetching budgets', 'InternalServerError'), res);
   }
 };
+
 export const addBudget = async (req: Request, res: Response) => {
   const { userId, category, limit, period } = req.body;
 
@@ -67,12 +68,13 @@ export const addBudget = async (req: Request, res: Response) => {
     );
   }
 };
+
 export const updateBudget = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { spent } = req.body;
+  const updateData = req.body;
 
   try {
-    const budget = await Budget.findByIdAndUpdate(id, { spent }, { new: true });
+    const budget = await Budget.findByIdAndUpdate(id, updateData, { new: true });
     if (!budget) {
       return ErrorHandler.handle(new HttpError(404, 'Budget not found', 'NotFoundError'), res);
     }
@@ -81,5 +83,21 @@ export const updateBudget = async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Error updating budget: ${error}`);
     ErrorHandler.handle(new HttpError(500, 'Error updating budget', 'InternalServerError'), res);
+  }
+};
+
+export const deleteBudget = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const budget = await Budget.findByIdAndDelete(id);
+    if (!budget) {
+      return ErrorHandler.handle(new HttpError(404, 'Budget not found', 'NotFoundError'), res);
+    }
+    logger.info(`Budget deleted: ${id}`);
+    res.json({ message: 'Budget deleted successfully' });
+  } catch (error) {
+    logger.error(`Error deleting budget: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error deleting budget', 'InternalServerError'), res);
   }
 };

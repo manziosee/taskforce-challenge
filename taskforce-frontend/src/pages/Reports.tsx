@@ -53,35 +53,52 @@ export default function Reports() {
 
   useEffect(() => {
     const fetchReports = async () => {
+      if (!user?.id) return;
+      
       setLoading(true);
       setError(null);
       try {
-        const response = await getFinancialReport(user?.id || '');
+        // Pass the timeRange to the API call
+        const response = await getFinancialReport(user.id, timeRange);
         setReportData(response);
       } catch (error: unknown) {
         setError((error as Error).message || 'Failed to fetch report data');
+        console.error('Error fetching reports:', error);
       } finally {
         setLoading(false);
       }
     };
+    
     if (user) {
       fetchReports();
     }
-  }, [user]);
+  }, [user, timeRange]); // Re-fetch when timeRange changes
 
   const handleExport = async () => {
+    if (!user?.id) return;
+    
     try {
-      const response = await exportFinancialReport(user?.id || '');
+      // Pass the timeRange to the export function
+      const response = await exportFinancialReport(user.id, timeRange);
       const url = window.URL.createObjectURL(new Blob([response]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `financial_report_${user?.id}.csv`);
+      link.setAttribute('download', `financial_report_${timeRange.replace(/\s+/g, '_').toLowerCase()}.csv`);
       document.body.appendChild(link);
       link.click();
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }, 100);
     } catch (error: unknown) {
       console.error('Error exporting report:', error);
       setError('Failed to export report');
     }
+  };
+
+  const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTimeRange(e.target.value);
   };
 
   if (loading) {
@@ -102,6 +119,14 @@ export default function Reports() {
     );
   }
 
+  // Check if there's any data to display
+  const hasIncomeExpenseData = (reportData?.incomeVsExpenses?.labels?.length ?? 0) > 0;
+  const hasExpenseCategoryData = (reportData?.expenseCategories?.categories?.length ?? 0) > 0;
+  const hasMonthlyTrendData = (reportData?.monthlyTrend?.labels?.length ?? 0) > 0;
+  
+  // Show a message if no data is available for any chart
+  const noDataAvailable = !hasIncomeExpenseData && !hasExpenseCategoryData && !hasMonthlyTrendData;
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -115,7 +140,7 @@ export default function Reports() {
               aria-label="Select Time Range"
               className="bg-transparent border-none focus:ring-0 text-sm"
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={handleTimeRangeChange}
             >
               <option>This Month</option>
               <option>Last Month</option>
@@ -126,6 +151,7 @@ export default function Reports() {
           <button
             className="button-hover inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             onClick={handleExport}
+            disabled={noDataAvailable}
           >
             <Download className="w-5 h-5 mr-2" />
             Export
@@ -133,102 +159,133 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-lg font-semibold mb-6">Income vs Expenses</h2>
-          <Bar
-            data={{
-              labels: reportData?.incomeVsExpenses?.labels || [],
-              datasets: [
-                {
-                  label: 'Income',
-                  data: reportData?.incomeVsExpenses?.income || [],
-                  backgroundColor: 'rgba(34, 197, 94, 0.5)',
-                },
-                {
-                  label: 'Expenses',
-                  data: reportData?.incomeVsExpenses?.expenses || [],
-                  backgroundColor: 'rgba(239, 68, 68, 0.5)',
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: (value) => `${currency} ${value.toLocaleString()}`,
-                  },
-                },
-              },
-            }}
-          />
+      {noDataAvailable ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+          <div className="text-4xl text-gray-300 dark:text-gray-600 mb-4">📊</div>
+          <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">No Data Available</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-2 text-center">
+            There are no transactions for the selected time period. Try selecting a different time range or add some transactions.
+          </p>
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+              <h2 className="text-lg font-semibold mb-6">Income vs Expenses</h2>
+              {hasIncomeExpenseData ? (
+                <Bar
+                  data={{
+                    labels: reportData?.incomeVsExpenses?.labels || [],
+                    datasets: [
+                      {
+                        label: 'Income',
+                        data: reportData?.incomeVsExpenses?.income || [],
+                        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                      },
+                      {
+                        label: 'Expenses',
+                        data: reportData?.incomeVsExpenses?.expenses || [],
+                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          callback: (value) => `${currency} ${Number(value).toLocaleString()}`,
+                        },
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-400">
+                  No income or expense data available for this period
+                </div>
+              )}
+            </div>
 
-        <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-lg font-semibold mb-6">Expense Categories</h2>
-          <Bar
-            data={{
-              labels: reportData?.expenseCategories?.categories || [],
-              datasets: [
-                {
-                  data: reportData?.expenseCategories?.data || [],
-                  backgroundColor: [
-                    'rgba(59, 130, 246, 0.5)',
-                    'rgba(234, 179, 8, 0.5)',
-                    'rgba(168, 85, 247, 0.5)',
-                    'rgba(239, 68, 68, 0.5)',
-                    'rgba(34, 197, 94, 0.5)',
-                    'rgba(107, 114, 128, 0.5)',
+            <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+              <h2 className="text-lg font-semibold mb-6">Expense Categories</h2>
+              {hasExpenseCategoryData ? (
+                <Bar
+                  data={{
+                    labels: reportData?.expenseCategories?.categories || [],
+                    datasets: [
+                      {
+                        label: 'Expenses',
+                        data: reportData?.expenseCategories?.data || [],
+                        backgroundColor: [
+                          'rgba(59, 130, 246, 0.5)',
+                          'rgba(234, 179, 8, 0.5)',
+                          'rgba(168, 85, 247, 0.5)',
+                          'rgba(239, 68, 68, 0.5)',
+                          'rgba(34, 197, 94, 0.5)',
+                          'rgba(107, 114, 128, 0.5)',
+                        ],
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          callback: (value) => `${currency} ${Number(value).toLocaleString()}`,
+                        },
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-400">
+                  No expense category data available for this period
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+            <h2 className="text-lg font-semibold mb-6">Monthly Trend</h2>
+            {hasMonthlyTrendData ? (
+              <Line
+                data={{
+                  labels: reportData?.monthlyTrend?.labels || [],
+                  datasets: [
+                    {
+                      label: 'Net Income',
+                      data: reportData?.monthlyTrend?.data || [],
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      tension: 0.4,
+                      fill: true,
+                    },
                   ],
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: (value) => `${currency} ${value.toLocaleString()}`,
+                }}
+                options={{
+                  responsive: true,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        callback: (value) => `${currency} ${Number(value).toLocaleString()}`,
+                      },
+                    },
                   },
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="hover-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-        <h2 className="text-lg font-semibold mb-6">Monthly Trend</h2>
-        <Line
-          data={{
-            labels: reportData?.monthlyTrend?.labels || [],
-            datasets: [
-              {
-                label: 'Net Income',
-                data: reportData?.monthlyTrend?.data || [],
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4,
-                fill: true,
-              },
-            ],
-          }}
-          options={{
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: (value) => `${currency} ${value.toLocaleString()}`,
-                },
-              },
-            },
-          }}
-        />
-      </div>
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64 text-gray-400">
+                No monthly trend data available for this period
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
