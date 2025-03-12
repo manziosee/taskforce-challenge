@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
 import { getBudgets, addBudget, deleteBudget } from '../services/budgetService';
 
 interface Budget {
@@ -14,7 +14,7 @@ interface Budget {
 
 export default function Budgets() {
   const { currency } = useCurrency();
-  const { user } = useAuth(); // Get user from useAuth
+  const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBudget, setNewBudget] = useState({
@@ -29,13 +29,11 @@ export default function Budgets() {
     const fetchBudgets = async () => {
       setLoading(true);
       setError('');
-  
+
       try {
         const data = await getBudgets(user?.id || '');
-        console.log('Fetched budgets:', data); // Debugging line
+        console.log('Fetched budgets:', data);
         setBudgets(data);
-  
-        // Debugging log for budgets state
         console.log('Budgets state:', data);
       } catch (err) {
         setError('Failed to fetch budgets');
@@ -44,7 +42,7 @@ export default function Budgets() {
         setLoading(false);
       }
     };
-  
+
     if (user) {
       fetchBudgets();
     }
@@ -54,13 +52,13 @@ export default function Budgets() {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
+
     if (!user?.id) {
       setError('User ID is missing');
       setLoading(false);
       return;
     }
-  
+
     try {
       const data = await addBudget({ ...newBudget, userId: user.id });
       setBudgets([...budgets, data]);

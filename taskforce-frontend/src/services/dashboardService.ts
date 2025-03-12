@@ -1,6 +1,6 @@
 import api from './api';
 
-export const getDashboardData = async (userId: string) => {
+export async function getDashboardData(userId: string) {
   const response = await api.get(`/api/dashboard/${userId}`);
   return response.data;
-};
+}
