@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, changePassword, logout } from '../controllers/authController';
+import { register, login, changePassword, logout, updateProfile } from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { ErrorHandler } from '../utils/http/error-handler';
 
@@ -125,6 +125,41 @@ router.put('/change-password', authMiddleware, async (req, res) => {
 router.post('/logout', authMiddleware, async (req, res) => {
   try {
     await logout(req, res);
+  } catch (error) {
+    ErrorHandler.handle(error as Error, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/update-profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully      
+ *       400:
+ *         description: User not found
+ *       500:
+ *         description: Error updating profile
+ */
+router.put('/update-profile', authMiddleware, async (req, res) => {
+  try {
+    await updateProfile(req, res);
   } catch (error) {
     ErrorHandler.handle(error as Error, res);
   }
