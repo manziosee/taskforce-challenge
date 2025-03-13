@@ -96,3 +96,21 @@ export const isTokenRevoked = (req: Request, res: Response, next: NextFunction):
   }
   next();
 };
+export const updateProfile = async (req: Request, res: Response): Promise<Response | void> => {
+  const { userId } = req.user!;
+  const { name, email } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(400).json({ error: 'User not found' });
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+
+    await user.save();
+    res.json({ message: 'Profile updated successfully', user });
+  } catch (error) {
+    logger.error(`Error updating profile: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error updating profile', 'InternalServerError'), res);
+  }
+};

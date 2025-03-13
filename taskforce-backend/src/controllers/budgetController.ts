@@ -5,6 +5,7 @@ import logger from '../utils/logger';
 import BudgetNotificationEmail from '../emails/BudgetNotificationEmail';
 import EmailService from '../service/emails.service';
 import User from '../models/User';
+import Category from '../models/Category';
 
 export const checkBudget = async (userId: string) => {
   try {
@@ -56,6 +57,12 @@ export const addBudget = async (req: Request, res: Response) => {
   }
 
   try {
+    // Check if the category exists
+    const categoryExists = await Category.findOne({ userId, name: category });
+    if (!categoryExists) {
+      return res.status(400).json({ error: 'Category does not exist' });
+    }
+
     const budget = new Budget({ userId, category, limit, period });
     await budget.save();
     logger.info(`Budget added for user: ${userId}`);

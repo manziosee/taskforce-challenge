@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isTokenRevoked = exports.logout = exports.changePassword = exports.login = exports.register = void 0;
+exports.updateProfile = exports.isTokenRevoked = exports.logout = exports.changePassword = exports.login = exports.register = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
@@ -110,3 +110,21 @@ const isTokenRevoked = (req, res, next) => {
     next();
 };
 exports.isTokenRevoked = isTokenRevoked;
+const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
+    const { name, email } = req.body;
+    try {
+        const user = yield User_1.default.findById(userId);
+        if (!user)
+            return res.status(400).json({ error: 'User not found' });
+        user.name = name || user.name;
+        user.email = email || user.email;
+        yield user.save();
+        res.json({ message: 'Profile updated successfully', user });
+    }
+    catch (error) {
+        logger_1.default.error(`Error updating profile: ${error}`);
+        utils_1.ErrorHandler.handle(new utils_1.HttpError(500, 'Error updating profile', 'InternalServerError'), res);
+    }
+});
+exports.updateProfile = updateProfile;

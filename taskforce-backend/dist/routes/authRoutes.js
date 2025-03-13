@@ -142,4 +142,39 @@ router.post('/logout', authMiddleware_1.authMiddleware, (req, res) => __awaiter(
         error_handler_1.ErrorHandler.handle(error, res);
     }
 }));
+/**
+ * @swagger
+ * /api/auth/update-profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: User not found
+ *       500:
+ *         description: Error updating profile
+ */
+router.put('/update-profile', authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, authController_1.updateProfile)(req, res);
+    }
+    catch (error) {
+        error_handler_1.ErrorHandler.handle(error, res);
+    }
+}));
 exports.default = router;

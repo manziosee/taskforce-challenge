@@ -14,14 +14,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTransactions = exports.deleteTransaction = exports.addTransaction = void 0;
 const Transaction_1 = __importDefault(require("../models/Transaction"));
+const Category_1 = __importDefault(require("../models/Category"));
+const Budget_1 = __importDefault(require("../models/Budget"));
 const error_handler_1 = require("../utils/http/error-handler");
 const currency_1 = require("../utils/currency");
 const logger_1 = __importDefault(require("../utils/logger"));
 const addTransaction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, amount, type, category, subcategory, account, date, description } = req.body;
     try {
+        // Check if the category exists
+        const categoryExists = yield Category_1.default.findOne({ userId, name: category });
+        if (!categoryExists) {
+            return res.status(400).json({ error: 'Category does not exist' });
+        }
         const transaction = new Transaction_1.default({ userId, amount, type, category, subcategory, account, date, description });
         yield transaction.save();
+        // Update the budget if it's an expense
+        if (type === 'expense') {
+            const budget = yield Budget_1.default.findOne({ userId, category });
+            if (budget) {
+                budget.spent += amount;
+                yield budget.save();
+            }
+        }
         logger_1.default.info(`Transaction added for user: ${userId}`);
         res.status(201).json(transaction);
     }
@@ -37,6 +52,14 @@ const deleteTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
         const transaction = yield Transaction_1.default.findByIdAndDelete(id);
         if (!transaction) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Transaction not found', 'NotFoundError'), res);
+        }
+        // Update the budget if it's an expense
+        if (transaction.type === 'expense') {
+            const budget = yield Budget_1.default.findOne({ userId: transaction.userId, category: transaction.category });
+            if (budget) {
+                budget.spent -= transaction.amount;
+                yield budget.save();
+            }
         }
         logger_1.default.info(`Transaction deleted: ${id}`);
         res.json({ message: 'Transaction deleted successfully' });

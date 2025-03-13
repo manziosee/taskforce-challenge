@@ -19,6 +19,7 @@ const logger_1 = __importDefault(require("../utils/logger"));
 const BudgetNotificationEmail_1 = __importDefault(require("../emails/BudgetNotificationEmail"));
 const emails_service_1 = __importDefault(require("../service/emails.service"));
 const User_1 = __importDefault(require("../models/User"));
+const Category_1 = __importDefault(require("../models/Category"));
 const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const budgets = yield Budget_1.default.find({ userId });
@@ -60,6 +61,11 @@ const addBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Missing required fields', 'ValidationError'), res);
     }
     try {
+        // Check if the category exists
+        const categoryExists = yield Category_1.default.findOne({ userId, name: category });
+        if (!categoryExists) {
+            return res.status(400).json({ error: 'Category does not exist' });
+        }
         const budget = new Budget_1.default({ userId, category, limit, period });
         yield budget.save();
         logger_1.default.info(`Budget added for user: ${userId}`);
