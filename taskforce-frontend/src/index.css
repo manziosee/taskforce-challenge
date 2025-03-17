@@ -45,7 +45,7 @@
 
 /* Gradient backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 .gradient-success {
@@ -74,6 +74,15 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* Modal styles */
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50;
+}
+
+.modal-content {
+  @apply bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md animate-scale-in max-h-[90vh] overflow-y-auto;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -94,14 +103,58 @@
 
 /* Input focus effects */
 .focus-ring {
-  @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none;
+  @apply focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none;
 }
 
 .dark .focus-ring {
-  @apply focus:ring-blue-400 focus:ring-offset-gray-900;
+  @apply focus:ring-indigo-400 focus:ring-offset-gray-900;
 }
 
 /* Button hover effects */
 .button-hover {
   @apply transition-all duration-200 ease-in-out hover:shadow-lg active:scale-95;
+}
+
+/* Dark mode overrides */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-400;
+}
+
+/* Primary color theme */
+:root {
+  --color-primary: 99, 102, 241;
+  --color-primary-light: 129, 140, 248;
+  --color-primary-dark: 79, 70, 229;
+}
+
+.text-primary {
+  color: rgb(var(--color-primary));
+}
+
+.bg-primary {
+  background-color: rgb(var(--color-primary));
+}
+
+.border-primary {
+  border-color: rgb(var(--color-primary));
 }
