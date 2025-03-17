@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 import { getBudgets, addBudget, updateBudget, deleteBudget } from '../services/budgetService';
+import { getCategories } from '../services/categoryService';
 
 interface Budget {
   id: string;
@@ -12,44 +13,40 @@ interface Budget {
   period: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  subcategories: string[];
+}
+
 export default function Budgets() {
   const { currency } = useCurrency();
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editBudget, setEditBudget] = useState<Budget | null>(null);
   const [newBudget, setNewBudget] = useState({
     category: '',
-    limit: 0,
+    limit: '',
     period: 'Monthly',
   });
+  const [editBudget, setEditBudget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Function to map backend budget data to frontend format
-  const mapBudgetFromBackend = (budget: any): Budget => {
-    return {
-      id: budget._id, // Backend uses _id not id
-      category: budget.category,
-      limit: budget.limit,
-      spent: budget.spent || 0,
-      period: budget.period.charAt(0).toUpperCase() + budget.period.slice(1) // Capitalize first letter
-    };
-  };
-
   useEffect(() => {
-    const fetchBudgets = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError('');
-
       try {
-        const data = await getBudgets(user?.id || '');
-        console.log('Fetched budgets:', data);
-        // Map the data to match frontend expectations
-        setBudgets(data.map(mapBudgetFromBackend));
+        const [budgetsData, categoriesData] = await Promise.all([
+          getBudgets(user?.id || ''),
+          getCategories(user?.id || '')
+        ]);
+        setBudgets(budgetsData);
+        setCategories(categoriesData);
       } catch (err) {
-        setError('Failed to fetch budgets');
+        setError('Failed to fetch data');
         console.error(err);
       } finally {
         setLoading(false);
@@ -57,7 +54,7 @@ export default function Budgets() {
     };
 
     if (user) {
-      fetchBudgets();
+      fetchData();
     }
   }, [user]);
 
@@ -76,15 +73,13 @@ export default function Budgets() {
       const responseData = await addBudget({ 
         ...newBudget, 
         userId: user.id,
-        // Ensure period is in the correct format
+        limit: Number(newBudget.limit),
         period: newBudget.period.toLowerCase()
       });
       
-      // Map the returned data to match frontend expectations
-      const mappedBudget = mapBudgetFromBackend(responseData);
-      setBudgets([...budgets, mappedBudget]);
+      setBudgets([...budgets, responseData]);
       setShowAddForm(false);
-      setNewBudget({ category: '', limit: 0, period: 'Monthly' });
+      setNewBudget({ category: '', limit: '', period: 'Monthly' });
     } catch (err) {
       setError('Failed to add budget');
       console.error(err);
@@ -95,10 +90,10 @@ export default function Budgets() {
 
   const handleEditClick = (budget: Budget) => {
     setEditBudget(budget);
-    setShowEditForm(true);
+    setShowAddForm(true);
   };
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
+  const handleUpdateBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editBudget) return;
     
@@ -112,10 +107,8 @@ export default function Budgets() {
         period: editBudget.period.toLowerCase()
       });
       
-      // Update the budget in the state
-      const updatedBudget = mapBudgetFromBackend(responseData);
-      setBudgets(budgets.map(b => b.id === updatedBudget.id ? updatedBudget : b));
-      setShowEditForm(false);
+      setBudgets(budgets.map(b => b.id === responseData.id ? responseData : b));
+      setShowAddForm(false);
       setEditBudget(null);
     } catch (err) {
       setError('Failed to update budget');
@@ -126,25 +119,32 @@ export default function Budgets() {
   };
 
   const handleDeleteBudget = async (id: string) => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      await deleteBudget(id);
-      setBudgets(budgets.filter((budget) => budget.id !== id));
-    } catch (err) {
-      setError('Failed to delete budget');
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (window.confirm('Are you sure you want to delete this budget?')) {
+      setLoading(true);
+      setError('');
+      
+      try {
+        await deleteBudget(id);
+        setBudgets(budgets.filter((budget) => budget.id !== id));
+      } catch (err) {
+        setError('Failed to delete budget');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
+  if (loading && !budgets.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {error && <div className="text-red-500">{error}</div>}
-      {loading && <div>Loading...</div>}
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Budget Planning</h1>
         <button
@@ -156,118 +156,74 @@ export default function Budgets() {
         </button>
       </div>
 
-      {/* Add Budget Form */}
-      {showAddForm && (
+      {/* Add/Edit Budget Form */}
+      {(showAddForm || editBudget) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Create New Budget</h2>
-            <form onSubmit={handleAddBudget} className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">
+              {editBudget ? 'Edit Budget' : 'Create New Budget'}
+            </h2>
+            <form onSubmit={editBudget ? handleUpdateBudget : handleAddBudget} className="space-y-4">
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category
                 </label>
-                <input
-                  type="text"
-                  id="category"
-                  value={newBudget.category}
-                  onChange={(e) => setNewBudget({ ...newBudget, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter category"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="limit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Limit
-                </label>
-                <input
-                  type="number"
-                  id="limit"
-                  value={newBudget.limit}
-                  onChange={(e) => setNewBudget({ ...newBudget, limit: Number(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter limit"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="period" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Period
-                </label>
                 <select
-                  id="period"
-                  value={newBudget.period}
-                  onChange={(e) => setNewBudget({ ...newBudget, period: e.target.value })}
+                  aria-label="Category"
+                  value={editBudget ? editBudget.category : newBudget.category}
+                  onChange={(e) => {
+                    if (editBudget) {
+                      setEditBudget({ ...editBudget, category: e.target.value });
+                    } else {
+                      setNewBudget({ ...newBudget, category: e.target.value });
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   required
                 >
-                  <option value="Monthly">Monthly</option>
-                  <option value="Weekly">Weekly</option>
-                  <option value="Yearly">Yearly</option>
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Save Budget
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Edit Budget Form */}
-      {showEditForm && editBudget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Edit Budget</h2>
-            <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
-                <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  id="edit-category"
-                  value={editBudget.category}
-                  onChange={(e) => setEditBudget({ ...editBudget, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter category"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="edit-limit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Limit
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Limit ({currency})
                 </label>
                 <input
                   type="number"
-                  id="edit-limit"
-                  value={editBudget.limit}
-                  onChange={(e) => setEditBudget({ ...editBudget, limit: Number(e.target.value) })}
+                  value={editBudget ? editBudget.limit : newBudget.limit}
+                  onChange={(e) => {
+                    if (editBudget) {
+                      setEditBudget({ ...editBudget, limit: Number(e.target.value) });
+                    } else {
+                      setNewBudget({ ...newBudget, limit: e.target.value });
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter limit"
+                  placeholder="Enter budget limit"
                   required
                 />
               </div>
+
               <div>
-                <label htmlFor="edit-period" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Period
                 </label>
                 <select
-                  id="edit-period"
-                  value={editBudget.period}
-                  onChange={(e) => setEditBudget({ ...editBudget, period: e.target.value })}
+                  aria-label="Period"
+                  value={editBudget ? editBudget.period : newBudget.period}
+                  onChange={(e) => {
+                    if (editBudget) {
+                      setEditBudget({ ...editBudget, period: e.target.value });
+                    } else {
+                      setNewBudget({ ...newBudget, period: e.target.value });
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   required
                 >
@@ -276,11 +232,12 @@ export default function Budgets() {
                   <option value="Yearly">Yearly</option>
                 </select>
               </div>
+
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => {
-                    setShowEditForm(false);
+                    setShowAddForm(false);
                     setEditBudget(null);
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
@@ -290,11 +247,20 @@ export default function Budgets() {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={loading}
                 >
-                  Update Budget
+                  {loading ? (
+                    <div className="flex items-center">
+                      <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                      {editBudget ? 'Updating...' : 'Saving...'}
+                    </div>
+                  ) : (
+                    editBudget ? 'Update Budget' : 'Save Budget'
+                  )}
                 </button>
               </div>
             </form>
+            {error && <div className="text-red-500 mt-2">{error}</div>}
           </div>
         </div>
       )}

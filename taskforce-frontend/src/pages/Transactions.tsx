@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { getTransactions, addTransaction, updateTransaction, deleteTransaction } from '../services/transactionService';
+import { getCategories } from '../services/categoryService';
 
 interface Transaction {
   id: number;
@@ -13,9 +15,16 @@ interface Transaction {
   type: 'income' | 'expense';
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function Transactions() {
+  const { currency } = useCurrency();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newTransaction, setNewTransaction] = useState({
     date: new Date(Date.now()),
     description: '',
@@ -30,20 +39,24 @@ export default function Transactions() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getTransactions(user?.id || '');
-        setTransactions(response);
+        const [transactionsData, categoriesData] = await Promise.all([
+          getTransactions(user?.id || ''),
+          getCategories(user?.id || '')
+        ]);
+        setTransactions(transactionsData);
+        setCategories(categoriesData);
       } catch (error: unknown) {
-        setError((error as Error).message || 'Failed to fetch transactions');
+        setError((error as Error).message || 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
     };
     if (user) {
-      fetchTransactions();
+      fetchData();
     }
   }, [user]);
 
@@ -107,22 +120,17 @@ export default function Transactions() {
         date: new Date(newTransaction.date),
       });
 
-      if (response && response.id) {
-        setTransactions([...transactions, response]);
-        setShowAddForm(false);
-        setNewTransaction({
-          date: new Date(Date.now()),
-          description: '',
-          category: '',
-          account: '',
-          amount: '',
-        });
-      } else {
-        setError('Invalid response from server');
-      }
+      setTransactions([...transactions, response]);
+      setShowAddForm(false);
+      setNewTransaction({
+        date: new Date(Date.now()),
+        description: '',
+        category: '',
+        account: '',
+        amount: '',
+      });
     } catch (error: unknown) {
       setError((error as Error).message || 'Failed to add transaction');
-      console.error('Error adding transaction:', error);
     } finally {
       setLoading(false);
     }
@@ -220,7 +228,7 @@ export default function Transactions() {
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
-                    {transaction.amount > 0 ? '+' : '-'}
+                    {currency} {transaction.amount > 0 ? '+' : '-'}
                     {Math.abs(transaction.amount).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -251,7 +259,7 @@ export default function Transactions() {
       {/* Add/Edit Transaction Modal */}
       {(showAddForm || editingTransaction) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md animate-scale-in">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md animate-scale-in mt-20">
             <h2 className="text-lg font-semibold mb-4">
               {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
             </h2>
@@ -262,7 +270,11 @@ export default function Transactions() {
                 </label>
                 <input
                   type="date"
-                  value={editingTransaction ? new Date(editingTransaction.date).toISOString().split('T')[0] : new Date(newTransaction.date).toISOString().split('T')[0]}
+                  title="Transaction Date"
+                  value={editingTransaction 
+                    ? new Date(editingTransaction.date).toISOString().split('T')[0] 
+                    : new Date(newTransaction.date).toISOString().split('T')[0]
+                  }
                   onChange={(e) => {
                     if (editingTransaction) {
                       setEditingTransaction({
@@ -278,7 +290,6 @@ export default function Transactions() {
                   }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   required
-                  title="Transaction Date"
                 />
               </div>
 
@@ -312,8 +323,8 @@ export default function Transactions() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category
                 </label>
-                <input
-                  type="text"
+                <select
+                  title="Category"
                   value={editingTransaction ? editingTransaction.category : newTransaction.category}
                   onChange={(e) => {
                     if (editingTransaction) {
@@ -329,9 +340,15 @@ export default function Transactions() {
                     }
                   }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter category"
                   required
-                />
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -368,20 +385,25 @@ export default function Transactions() {
                   type="number"
                   value={editingTransaction ? editingTransaction.amount : newTransaction.amount}
                   onChange={(e) => {
+                    const value = e.target.value;
                     if (editingTransaction) {
                       setEditingTransaction({
                         ...editingTransaction,
-                        amount: Number(e.target.value),
+                        amount: Number(value),
                       });
                     } else {
                       setNewTransaction({
                         ...newTransaction,
-                        amount: e.target.value,
+                        amount: value,
                       });
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter amount"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                    Number(editingTransaction?.amount || newTransaction.amount) > 0
+                      ? 'text-green-600 border-green-300 focus:ring-green-500'
+                      : 'text-red-600 border-red-300 focus:ring-red-500'
+                  } dark:bg-gray-700 dark:text-white`}
+                  placeholder="Enter amount (positive for income, negative for expense)"
                   required
                 />
               </div>
