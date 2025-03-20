@@ -31,7 +31,7 @@ export const updateBudget = async (id: string, budgetData: {
   category?: string; 
   limit?: number; 
   period?: string; 
-  spent?: number 
+  spent?: number; 
 }) => {
   // Convert period to lowercase if it exists
   const payload = { ...budgetData };
