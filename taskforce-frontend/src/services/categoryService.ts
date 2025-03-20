@@ -5,7 +5,12 @@ export const getCategories = async (userId: string) => {
   return response.data;
 };
 
-export const addCategory = async (categoryData: { userId: string; name: string; subcategories: string[] }) => {
+export const addCategory = async (categoryData: {
+  userId: string;
+  name: string;
+  type: 'income' | 'expense';
+  subcategories: string[];
+}) => {
   const response = await api.post('/api/categories', categoryData);
   return response.data;
 };
