@@ -76,6 +76,7 @@ export default function Transactions() {
       try {
         const response = await updateTransaction(editingTransaction.id, {
           ...editingTransaction,
+          userId: user?.id || '',
           type: Number(editingTransaction.amount) > 0 ? 'income' : 'expense',
         });
         const updatedTransactions = transactions.map((t) =>

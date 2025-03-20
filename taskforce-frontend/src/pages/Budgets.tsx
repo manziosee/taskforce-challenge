@@ -11,6 +11,7 @@ interface Budget {
   limit: number;
   spent: number;
   period: string;
+  type: 'income' | 'expense';
 }
 
 interface Category {
@@ -29,6 +30,7 @@ export default function Budgets() {
     category: '',
     limit: '',
     period: 'Monthly',
+    type: 'expense' as 'income' | 'expense',
   });
   const [editBudget, setEditBudget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ export default function Budgets() {
       
       setBudgets([...budgets, responseData]);
       setShowAddForm(false);
-      setNewBudget({ category: '', limit: '', period: 'Monthly' });
+      setNewBudget({ category: '', limit: '', period: 'Monthly', type: 'expense' });
     } catch (err) {
       setError('Failed to add budget');
       console.error(err);
@@ -104,7 +106,8 @@ export default function Budgets() {
       const responseData = await updateBudget(editBudget.id, {
         category: editBudget.category,
         limit: editBudget.limit,
-        period: editBudget.period.toLowerCase()
+        period: editBudget.period.toLowerCase(),
+
       });
       
       setBudgets(budgets.map(b => b.id === responseData.id ? responseData : b));
@@ -233,6 +236,28 @@ export default function Budgets() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Type
+                </label>
+                <select
+                  aria-label="Type"
+                  value={editBudget ? editBudget.type : newBudget.type}
+                  onChange={(e) => {
+                    if (editBudget) {
+                      setEditBudget({ ...editBudget, type: e.target.value as 'income' | 'expense' });
+                    } else {
+                      setNewBudget({ ...newBudget, type: e.target.value as 'income' | 'expense' });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
+
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
@@ -315,7 +340,11 @@ export default function Budgets() {
                 <span className={(budget.spent / budget.limit) * 100 > 100 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}>
                   {((budget.spent / budget.limit) * 100).toFixed(1)}% used
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">{budget.period}</span>
+                <span className={`text-sm font-medium ${
+                  budget.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {budget.period}
+                </span>
               </div>
             </div>
           </div>
