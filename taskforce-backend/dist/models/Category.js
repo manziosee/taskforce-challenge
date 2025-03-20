@@ -37,6 +37,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const CategorySchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
+    type: { type: String, enum: ['income', 'expense'], required: true },
     subcategories: { type: [String], required: true },
 });
 exports.default = mongoose_1.default.model('Category', CategorySchema);

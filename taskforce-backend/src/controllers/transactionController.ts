@@ -80,3 +80,19 @@ export const getTransactions = async (req: Request, res: Response) => {
     ErrorHandler.handle(new HttpError(500, 'Error fetching transactions', 'InternalServerError'), res);
   }
 };
+
+export const updateTransaction = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { amount, type, category, subcategory, account, date, description } = req.body;
+
+  try {
+    const transaction = await Transaction.findByIdAndUpdate(id, { amount, type, category, subcategory, account, date, description }, { new: true });
+    if (!transaction) {
+      return ErrorHandler.handle(new HttpError(404, 'Transaction not found', 'NotFoundError'), res);
+    }
+    res.json(transaction);
+  } catch (error) {
+    logger.error(`Error updating transaction: ${error}`);
+    ErrorHandler.handle(new HttpError(500, 'Error updating transaction', 'InternalServerError'), res);
+  }
+};

@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { getTransactions, addTransaction, deleteTransaction } from '../controllers/transactionController';
+import { getTransactions, addTransaction, deleteTransaction, updateTransaction } from '../controllers/transactionController';
 import { validateTransaction, handleValidationErrors } from '../middleware/validation';
 import { ErrorHandler } from '../utils/http/error-handler';
 
@@ -106,6 +106,58 @@ router.post('/', validateTransaction, handleValidationErrors, async (req: expres
 router.delete('/:id', async (req, res) => {
   try {
     await deleteTransaction(req, res);
+  } catch (error) {
+    ErrorHandler.handle(error as Error, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/transactions/{id}:
+ *   put:
+ *     summary: Update a transaction
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               type:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               subcategory:
+ *                 type: string
+ *               account:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Transaction updated successfully
+ *       404:
+ *         description: Transaction not found
+ *       500:
+ *         description: Error updating transaction
+ */
+router.put('/:id', validateTransaction, handleValidationErrors, async (req: express.Request, res: express.Response) => {
+  try {
+    await updateTransaction(req, res);
   } catch (error) {
     ErrorHandler.handle(error as Error, res);
   }

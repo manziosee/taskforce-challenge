@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTransactions = exports.deleteTransaction = exports.addTransaction = void 0;
+exports.updateTransaction = exports.getTransactions = exports.deleteTransaction = exports.addTransaction = void 0;
 const Transaction_1 = __importDefault(require("../models/Transaction"));
 const Category_1 = __importDefault(require("../models/Category"));
 const Budget_1 = __importDefault(require("../models/Budget"));
@@ -88,3 +88,19 @@ const getTransactions = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.getTransactions = getTransactions;
+const updateTransaction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { amount, type, category, subcategory, account, date, description } = req.body;
+    try {
+        const transaction = yield Transaction_1.default.findByIdAndUpdate(id, { amount, type, category, subcategory, account, date, description }, { new: true });
+        if (!transaction) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Transaction not found', 'NotFoundError'), res);
+        }
+        res.json(transaction);
+    }
+    catch (error) {
+        logger_1.default.error(`Error updating transaction: ${error}`);
+        error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(500, 'Error updating transaction', 'InternalServerError'), res);
+    }
+});
+exports.updateTransaction = updateTransaction;

@@ -122,4 +122,56 @@ router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         error_handler_1.ErrorHandler.handle(error, res);
     }
 }));
+/**
+ * @swagger
+ * /api/transactions/{id}:
+ *   put:
+ *     summary: Update a transaction
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               type:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               subcategory:
+ *                 type: string
+ *               account:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Transaction updated successfully
+ *       404:
+ *         description: Transaction not found
+ *       500:
+ *         description: Error updating transaction
+ */
+router.put('/:id', validation_1.validateTransaction, validation_1.handleValidationErrors, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, transactionController_1.updateTransaction)(req, res);
+    }
+    catch (error) {
+        error_handler_1.ErrorHandler.handle(error, res);
+    }
+}));
 exports.default = router;
