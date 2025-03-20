@@ -65,6 +65,9 @@ router.get('/:userId', (req, res) => __awaiter(void 0, void 0, void 0, function*
  *                 type: string
  *               name:
  *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: ['income', 'expense']
  *               subcategories:
  *                 type: array
  *                 items:

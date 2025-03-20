@@ -54,6 +54,9 @@ router.get('/:userId', async (req, res) => {
  *                 type: string
  *               name:
  *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: ['income', 'expense']
  *               subcategories:
  *                 type: array
  *                 items:

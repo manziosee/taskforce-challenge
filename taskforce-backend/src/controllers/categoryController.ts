@@ -17,10 +17,10 @@ export const getCategories = async (req: Request, res: Response) => {
 };
 
 export const addCategory = async (req: Request, res: Response) => {
-  const { userId, name, subcategories } = req.body;
+  const { userId, name, type, subcategories } = req.body;
 
   try {
-    const category = new Category({ userId, name, subcategories });
+    const category = new Category({ userId, name, type, subcategories });
     await category.save();
     logger.info(`Category added for user: ${userId}`);
     res.status(201).json(category);
@@ -32,7 +32,6 @@ export const addCategory = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
-
   try {
     const category = await Category.findByIdAndDelete(id);
     if (!category) {

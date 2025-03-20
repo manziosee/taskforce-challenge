@@ -30,9 +30,9 @@ const getCategories = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.getCategories = getCategories;
 const addCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, name, subcategories } = req.body;
+    const { userId, name, type, subcategories } = req.body;
     try {
-        const category = new Category_1.default({ userId, name, subcategories });
+        const category = new Category_1.default({ userId, name, type, subcategories });
         yield category.save();
         logger_1.default.info(`Category added for user: ${userId}`);
         res.status(201).json(category);
