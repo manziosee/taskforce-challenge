@@ -8,7 +8,6 @@ export const getCategories = async (req: Request, res: Response) => {
 
   try {
     const categories = await Category.find({ userId });
-    logger.info(`Categories fetched for user: ${userId}`);
     res.json(categories);
   } catch (error) {
     logger.error(`Error fetching categories: ${error}`);
@@ -20,9 +19,22 @@ export const addCategory = async (req: Request, res: Response) => {
   const { userId, name, type, subcategories } = req.body;
 
   try {
-    const category = new Category({ userId, name, type, subcategories });
+    // Check if category already exists
+    const existingCategory = await Category.findOne({ userId, name });
+    if (existingCategory) {
+      return ErrorHandler.handle(
+        new HttpError(400, 'Category already exists', 'ValidationError'),
+        res
+      );
+    }
+
+    const category = new Category({ 
+      userId, 
+      name, 
+      type, 
+      subcategories: subcategories || [] 
+    });
     await category.save();
-    logger.info(`Category added for user: ${userId}`);
     res.status(201).json(category);
   } catch (error) {
     logger.error(`Error adding category: ${error}`);
@@ -32,12 +44,12 @@ export const addCategory = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
+
   try {
     const category = await Category.findByIdAndDelete(id);
     if (!category) {
       return ErrorHandler.handle(new HttpError(404, 'Category not found', 'NotFoundError'), res);
     }
-    logger.info(`Category deleted: ${id}`);
     res.json({ message: 'Category deleted successfully' });
   } catch (error) {
     logger.error(`Error deleting category: ${error}`);
@@ -47,13 +59,37 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
 export const updateCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, type } = req.body;
 
   try {
-    const category = await Category.findByIdAndUpdate(id, { name }, { new: true });
+    // Check if new name already exists
+    if (name) {
+      const existingCategory = await Category.findOne({ 
+        userId: req.body.userId, 
+        name 
+      });
+      if (existingCategory && (existingCategory._id as string).toString() !== id) {
+        return ErrorHandler.handle(
+          new HttpError(400, 'Category name already exists', 'ValidationError'),
+          res
+        );
+      }
+    }
+
+    const updateData: { name?: string; type?: string } = {};
+    if (name) updateData.name = name;
+    if (type) updateData.type = type;
+
+    const category = await Category.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true }
+    );
+    
     if (!category) {
       return ErrorHandler.handle(new HttpError(404, 'Category not found', 'NotFoundError'), res);
     }
+    
     res.json(category);
   } catch (error) {
     logger.error(`Error updating category: ${error}`);
@@ -71,9 +107,13 @@ export const updateSubcategory = async (req: Request, res: Response) => {
       return ErrorHandler.handle(new HttpError(404, 'Category not found', 'NotFoundError'), res);
     }
 
-    const index = parseInt(subcategoryIndex, 10); // Parse subcategoryIndex to a number
-    if (isNaN(index) || index < 0 || index >= category.subcategories.length) {
+    const index = parseInt(subcategoryIndex, 10);
+    if (isNaN(index)) {
       return ErrorHandler.handle(new HttpError(400, 'Invalid subcategory index', 'BadRequestError'), res);
+    }
+
+    if (index < 0 || index >= category.subcategories.length) {
+      return ErrorHandler.handle(new HttpError(400, 'Subcategory index out of range', 'BadRequestError'), res);
     }
 
     category.subcategories[index] = value;
@@ -95,12 +135,16 @@ export const deleteSubcategory = async (req: Request, res: Response) => {
       return ErrorHandler.handle(new HttpError(404, 'Category not found', 'NotFoundError'), res);
     }
 
-    const index = parseInt(subcategoryIndex, 10); // Parse subcategoryIndex to a number
-    if (isNaN(index) || index < 0 || index >= category.subcategories.length) {
+    const index = parseInt(subcategoryIndex, 10);
+    if (isNaN(index)) {
       return ErrorHandler.handle(new HttpError(400, 'Invalid subcategory index', 'BadRequestError'), res);
     }
 
-    category.subcategories.splice(index, 1); // Use the parsed index
+    if (index < 0 || index >= category.subcategories.length) {
+      return ErrorHandler.handle(new HttpError(400, 'Subcategory index out of range', 'BadRequestError'), res);
+    }
+
+    category.subcategories.splice(index, 1);
     await category.save();
 
     res.json(category);

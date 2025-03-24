@@ -33,6 +33,25 @@ router.use(authMiddleware_1.authMiddleware);
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [income, expense]
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: currency
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: List of transactions
@@ -61,6 +80,11 @@ router.get('/:userId', (req, res) => __awaiter(void 0, void 0, void 0, function*
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - userId
+ *               - amount
+ *               - type
+ *               - category
  *             properties:
  *               userId:
  *                 type: string
@@ -68,6 +92,7 @@ router.get('/:userId', (req, res) => __awaiter(void 0, void 0, void 0, function*
  *                 type: number
  *               type:
  *                 type: string
+ *                 enum: [income, expense]
  *               category:
  *                 type: string
  *               subcategory:
@@ -76,11 +101,14 @@ router.get('/:userId', (req, res) => __awaiter(void 0, void 0, void 0, function*
  *                 type: string
  *               date:
  *                 type: string
+ *                 format: date-time
  *               description:
  *                 type: string
  *     responses:
  *       201:
  *         description: Transaction added successfully
+ *       400:
+ *         description: Validation error
  *       500:
  *         description: Error adding transaction
  */

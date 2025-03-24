@@ -16,7 +16,6 @@ export const checkBudget = async (userId: string) => {
       if (budget.spent > budget.limit) {
         const message = `Budget exceeded for ${budget.category}. Limit: ${budget.limit}, Spent: ${budget.spent}`;
         if (user) {
-          // Send email notification
           await EmailService.sendOTP(
             { to: user.email, subject: 'Budget Exceeded Notification' },
             await BudgetNotificationEmail({ message })
@@ -32,12 +31,8 @@ export const checkBudget = async (userId: string) => {
 export const getBudgets = async (req: Request, res: Response) => {
   const userId = req.params.userId;
 
-  // Log the incoming request
-  logger.info(`Fetching budgets for user ID: ${userId}`);
-
   try {
     const budgets = await Budget.find({ userId });
-    logger.info(`Fetched budgets for user ID: ${userId}`, budgets);
     res.status(200).json(budgets);
   } catch (error) {
     logger.error(`Error fetching budgets for user ID: ${userId}`, error);
@@ -48,7 +43,6 @@ export const getBudgets = async (req: Request, res: Response) => {
 export const addBudget = async (req: Request, res: Response) => {
   const { userId, category, limit, period } = req.body;
 
-  // Validate required fields
   if (!userId || !category || !limit || !period) {
     return ErrorHandler.handle(
       new HttpError(400, 'Missing required fields', 'ValidationError'),
@@ -57,15 +51,13 @@ export const addBudget = async (req: Request, res: Response) => {
   }
 
   try {
-    // Check if the category exists
     const categoryExists = await Category.findOne({ userId, name: category });
     if (!categoryExists) {
       return res.status(400).json({ error: 'Category does not exist' });
     }
 
-    const budget = new Budget({ userId, category, limit, period });
+    const budget = new Budget({ userId, category, limit, period, spent: 0 });
     await budget.save();
-    logger.info(`Budget added for user: ${userId}`);
     res.status(201).json(budget);
   } catch (error) {
     logger.error(`Error adding budget: ${error}`);
@@ -81,11 +73,26 @@ export const updateBudget = async (req: Request, res: Response) => {
   const updateData = req.body;
 
   try {
-    const budget = await Budget.findByIdAndUpdate(id, updateData, { new: true });
-    if (!budget) {
+    // Find the budget first to ensure it exists
+    const existingBudget = await Budget.findById(id);
+    if (!existingBudget) {
       return ErrorHandler.handle(new HttpError(404, 'Budget not found', 'NotFoundError'), res);
     }
-    logger.info(`Budget updated: ${id}`);
+
+    // Prevent updating spent amount directly
+    if (updateData.spent !== undefined) {
+      return ErrorHandler.handle(
+        new HttpError(400, 'Cannot directly update spent amount', 'BadRequestError'),
+        res
+      );
+    }
+
+    const budget = await Budget.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true }
+    );
+    
     res.json(budget);
   } catch (error) {
     logger.error(`Error updating budget: ${error}`);
@@ -97,11 +104,12 @@ export const deleteBudget = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const budget = await Budget.findByIdAndDelete(id);
+    const budget = await Budget.findById(id);
     if (!budget) {
       return ErrorHandler.handle(new HttpError(404, 'Budget not found', 'NotFoundError'), res);
     }
-    logger.info(`Budget deleted: ${id}`);
+
+    await Budget.findByIdAndDelete(id);
     res.json({ message: 'Budget deleted successfully' });
   } catch (error) {
     logger.error(`Error deleting budget: ${error}`);

@@ -22,6 +22,8 @@
     "@react-email/components": "^0.0.32",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
+    "canvas": "^3.1.0",
+    "chart.js": "^4.4.8",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -31,6 +33,7 @@
     "helmet": "^8.0.0",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.5",
     "react": "^19.0.0",
@@ -43,13 +46,14 @@
   "devDependencies": {
     "@types/axios": "^0.14.4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/chart.js": "^2.9.41",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-validator": "^3.0.2",
     "@types/jest": "^29.5.14",
     "@types/json2csv": "^5.0.7",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.13.13",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "@types/supertest": "^6.0.2",
@@ -64,8 +68,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },
- "engines": {
-  "node": ">=20.x",
-  "npm": ">=9.x"
-}
+  "engines": {
+    "node": ">=20.x",
+    "npm": ">=9.x"
+  }
 }

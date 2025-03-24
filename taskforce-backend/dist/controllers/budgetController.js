@@ -28,7 +28,6 @@ const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
             if (budget.spent > budget.limit) {
                 const message = `Budget exceeded for ${budget.category}. Limit: ${budget.limit}, Spent: ${budget.spent}`;
                 if (user) {
-                    // Send email notification
                     yield emails_service_1.default.sendOTP({ to: user.email, subject: 'Budget Exceeded Notification' }, yield (0, BudgetNotificationEmail_1.default)({ message }));
                 }
             }
@@ -41,11 +40,8 @@ const checkBudget = (userId) => __awaiter(void 0, void 0, void 0, function* () {
 exports.checkBudget = checkBudget;
 const getBudgets = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;
-    // Log the incoming request
-    logger_1.default.info(`Fetching budgets for user ID: ${userId}`);
     try {
         const budgets = yield Budget_1.default.find({ userId });
-        logger_1.default.info(`Fetched budgets for user ID: ${userId}`, budgets);
         res.status(200).json(budgets);
     }
     catch (error) {
@@ -56,19 +52,16 @@ const getBudgets = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.getBudgets = getBudgets;
 const addBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, category, limit, period } = req.body;
-    // Validate required fields
     if (!userId || !category || !limit || !period) {
         return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Missing required fields', 'ValidationError'), res);
     }
     try {
-        // Check if the category exists
         const categoryExists = yield Category_1.default.findOne({ userId, name: category });
         if (!categoryExists) {
             return res.status(400).json({ error: 'Category does not exist' });
         }
-        const budget = new Budget_1.default({ userId, category, limit, period });
+        const budget = new Budget_1.default({ userId, category, limit, period, spent: 0 });
         yield budget.save();
-        logger_1.default.info(`Budget added for user: ${userId}`);
         res.status(201).json(budget);
     }
     catch (error) {
@@ -81,11 +74,16 @@ const updateBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     const { id } = req.params;
     const updateData = req.body;
     try {
-        const budget = yield Budget_1.default.findByIdAndUpdate(id, updateData, { new: true });
-        if (!budget) {
+        // Find the budget first to ensure it exists
+        const existingBudget = yield Budget_1.default.findById(id);
+        if (!existingBudget) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Budget not found', 'NotFoundError'), res);
         }
-        logger_1.default.info(`Budget updated: ${id}`);
+        // Prevent updating spent amount directly
+        if (updateData.spent !== undefined) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Cannot directly update spent amount', 'BadRequestError'), res);
+        }
+        const budget = yield Budget_1.default.findByIdAndUpdate(id, updateData, { new: true });
         res.json(budget);
     }
     catch (error) {
@@ -97,11 +95,11 @@ exports.updateBudget = updateBudget;
 const deleteBudget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
-        const budget = yield Budget_1.default.findByIdAndDelete(id);
+        const budget = yield Budget_1.default.findById(id);
         if (!budget) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Budget not found', 'NotFoundError'), res);
         }
-        logger_1.default.info(`Budget deleted: ${id}`);
+        yield Budget_1.default.findByIdAndDelete(id);
         res.json({ message: 'Budget deleted successfully' });
     }
     catch (error) {
