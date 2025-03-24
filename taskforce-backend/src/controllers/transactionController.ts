@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Transaction from '../models/Transaction';
+import Transaction, { ITransaction } from '../models/Transaction';
 import Category from '../models/Category';
 import Budget from '../models/Budget';
 import { HttpError, ErrorHandler } from '../utils/http/error-handler';
@@ -11,29 +11,60 @@ export const addTransaction = async (req: Request, res: Response) => {
   const { userId, amount, type, category, subcategory, account, date, description } = req.body;
 
   try {
-    // Check if the category exists
-    const categoryExists = await Category.findOne({ userId, name: category });
+    // Validate category exists and matches type
+    const categoryExists = await Category.findOne({ 
+      userId, 
+      name: category,
+      type // Ensure category type matches transaction type
+    });
+    
     if (!categoryExists) {
-      return res.status(400).json({ error: 'Category does not exist' });
+      return res.status(400).json({ 
+        error: 'Category does not exist or type mismatch' 
+      });
     }
 
-    const transaction = new Transaction({ userId, amount, type, category, subcategory, account, date, description });
+    const transaction = new Transaction({ 
+      userId, 
+      amount, 
+      type, 
+      category, 
+      subcategory, 
+      account, 
+      date: date || new Date(), 
+      description 
+    });
+    
     await transaction.save();
 
-    // Update the budget if it's an expense
+    // Update budget if it's an expense
     if (type === 'expense') {
-      const budget = await Budget.findOne({ userId, category });
-      if (budget) {
-        budget.spent += amount;
-        await budget.save();
-      }
+      await updateBudgetSpent(userId, category, amount);
     }
 
     logger.info(`Transaction added for user: ${userId}`);
     res.status(201).json(transaction);
   } catch (error) {
     logger.error(`Error adding transaction: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error adding transaction', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error adding transaction', 'InternalServerError'), 
+      res
+    );
+  }
+};
+
+// Helper function to update budget spent amount
+const updateBudgetSpent = async (userId: string, category: string, amount: number) => {
+  const budget = await Budget.findOne({ userId, category });
+  if (budget) {
+    budget.spent += amount;
+    await budget.save();
+    
+    // Check if budget is exceeded
+    if (budget.spent > budget.limit) {
+      logger.warn(`Budget exceeded for ${category}`);
+      // You can add notification logic here
+    }
   }
 };
 
@@ -41,43 +72,77 @@ export const deleteTransaction = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const transaction = await Transaction.findByIdAndDelete(id);
+    const transaction = await Transaction.findById(id);
     if (!transaction) {
-      return ErrorHandler.handle(new HttpError(404, 'Transaction not found', 'NotFoundError'), res);
+      return ErrorHandler.handle(
+        new HttpError(404, 'Transaction not found', 'NotFoundError'), 
+        res
+      );
     }
 
-    // Update the budget if it's an expense
+    // Reverse budget update if it was an expense
     if (transaction.type === 'expense') {
-      const budget = await Budget.findOne({ userId: transaction.userId, category: transaction.category });
-      if (budget) {
-        budget.spent -= transaction.amount;
-        await budget.save();
-      }
+      await updateBudgetSpent(
+        transaction.userId, 
+        transaction.category, 
+        -transaction.amount
+      );
     }
 
+    await Transaction.findByIdAndDelete(id);
     logger.info(`Transaction deleted: ${id}`);
     res.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     logger.error(`Error deleting transaction: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error deleting transaction', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error deleting transaction', 'InternalServerError'), 
+      res
+    );
   }
 };
 
 export const getTransactions = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { currency } = req.query;
+  const { currency, type, startDate, endDate } = req.query;
 
   try {
-    const transactions = await Transaction.find({ userId });
-    if (currency) {
-      for (const transaction of transactions) {
-        transaction.amount = await convertCurrency(transaction.amount, 'RWF', currency as string);
-      }
+    let query: any = { userId };
+    
+    if (type) {
+      query.type = type;
     }
+    
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string)
+      };
+    }
+
+    let transactions = await Transaction.find(query).sort({ date: -1 });
+    
+    if (currency) {
+      transactions = await Promise.all(transactions.map(async (transaction) => {
+        const convertedAmount = await convertCurrency(
+          transaction.amount, 
+          'RWF', 
+          currency as string
+        );
+        const transactionObj = transaction.toObject();
+        return {
+          ...transactionObj,
+          amount: convertedAmount,
+        } as mongoose.Document<unknown, {}, ITransaction> & ITransaction & { _id: unknown, __v: number };
+      }));
+    }
+    
     res.json(transactions);
   } catch (error) {
     logger.error(`Error fetching transactions: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error fetching transactions', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error fetching transactions', 'InternalServerError'), 
+      res
+    );
   }
 };
 
@@ -86,13 +151,61 @@ export const updateTransaction = async (req: Request, res: Response) => {
   const { amount, type, category, subcategory, account, date, description } = req.body;
 
   try {
-    const transaction = await Transaction.findByIdAndUpdate(id, { amount, type, category, subcategory, account, date, description }, { new: true });
-    if (!transaction) {
-      return ErrorHandler.handle(new HttpError(404, 'Transaction not found', 'NotFoundError'), res);
+    const originalTransaction = await Transaction.findById(id);
+    if (!originalTransaction) {
+      return ErrorHandler.handle(
+        new HttpError(404, 'Transaction not found', 'NotFoundError'), 
+        res
+      );
     }
-    res.json(transaction);
+
+    // Validate category if changed
+    if (category && category !== originalTransaction.category) {
+      const categoryExists = await Category.findOne({ 
+        userId: originalTransaction.userId, 
+        name: category,
+        type: type || originalTransaction.type
+      });
+      
+      if (!categoryExists) {
+        return res.status(400).json({ 
+          error: 'Category does not exist or type mismatch' 
+        });
+      }
+    }
+
+    // Calculate amount difference for budget updates
+    const amountDiff = amount ? (amount - originalTransaction.amount) : 0;
+
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+      id,
+      { 
+        amount, 
+        type, 
+        category, 
+        subcategory, 
+        account, 
+        date, 
+        description 
+      },
+      { new: true }
+    );
+
+    // Update budget if it was or is now an expense
+    if (originalTransaction.type === 'expense' || type === 'expense') {
+      await updateBudgetSpent(
+        originalTransaction.userId,
+        category || originalTransaction.category,
+        type === 'expense' ? amountDiff : -originalTransaction.amount
+      );
+    }
+
+    res.json(updatedTransaction);
   } catch (error) {
     logger.error(`Error updating transaction: ${error}`);
-    ErrorHandler.handle(new HttpError(500, 'Error updating transaction', 'InternalServerError'), res);
+    ErrorHandler.handle(
+      new HttpError(500, 'Error updating transaction', 'InternalServerError'), 
+      res
+    );
   }
 };

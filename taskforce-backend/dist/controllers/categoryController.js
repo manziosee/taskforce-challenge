@@ -20,7 +20,6 @@ const getCategories = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     const { userId } = req.params;
     try {
         const categories = yield Category_1.default.find({ userId });
-        logger_1.default.info(`Categories fetched for user: ${userId}`);
         res.json(categories);
     }
     catch (error) {
@@ -32,9 +31,18 @@ exports.getCategories = getCategories;
 const addCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, name, type, subcategories } = req.body;
     try {
-        const category = new Category_1.default({ userId, name, type, subcategories });
+        // Check if category already exists
+        const existingCategory = yield Category_1.default.findOne({ userId, name });
+        if (existingCategory) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Category already exists', 'ValidationError'), res);
+        }
+        const category = new Category_1.default({
+            userId,
+            name,
+            type,
+            subcategories: subcategories || []
+        });
         yield category.save();
-        logger_1.default.info(`Category added for user: ${userId}`);
         res.status(201).json(category);
     }
     catch (error) {
@@ -50,7 +58,6 @@ const deleteCategory = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!category) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Category not found', 'NotFoundError'), res);
         }
-        logger_1.default.info(`Category deleted: ${id}`);
         res.json({ message: 'Category deleted successfully' });
     }
     catch (error) {
@@ -61,9 +68,24 @@ const deleteCategory = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.deleteCategory = deleteCategory;
 const updateCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, type } = req.body;
     try {
-        const category = yield Category_1.default.findByIdAndUpdate(id, { name }, { new: true });
+        // Check if new name already exists
+        if (name) {
+            const existingCategory = yield Category_1.default.findOne({
+                userId: req.body.userId,
+                name
+            });
+            if (existingCategory && existingCategory._id.toString() !== id) {
+                return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Category name already exists', 'ValidationError'), res);
+            }
+        }
+        const updateData = {};
+        if (name)
+            updateData.name = name;
+        if (type)
+            updateData.type = type;
+        const category = yield Category_1.default.findByIdAndUpdate(id, updateData, { new: true });
         if (!category) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Category not found', 'NotFoundError'), res);
         }
@@ -83,9 +105,12 @@ const updateSubcategory = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!category) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Category not found', 'NotFoundError'), res);
         }
-        const index = parseInt(subcategoryIndex, 10); // Parse subcategoryIndex to a number
-        if (isNaN(index) || index < 0 || index >= category.subcategories.length) {
+        const index = parseInt(subcategoryIndex, 10);
+        if (isNaN(index)) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Invalid subcategory index', 'BadRequestError'), res);
+        }
+        if (index < 0 || index >= category.subcategories.length) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Subcategory index out of range', 'BadRequestError'), res);
         }
         category.subcategories[index] = value;
         yield category.save();
@@ -104,11 +129,14 @@ const deleteSubcategory = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!category) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(404, 'Category not found', 'NotFoundError'), res);
         }
-        const index = parseInt(subcategoryIndex, 10); // Parse subcategoryIndex to a number
-        if (isNaN(index) || index < 0 || index >= category.subcategories.length) {
+        const index = parseInt(subcategoryIndex, 10);
+        if (isNaN(index)) {
             return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Invalid subcategory index', 'BadRequestError'), res);
         }
-        category.subcategories.splice(index, 1); // Use the parsed index
+        if (index < 0 || index >= category.subcategories.length) {
+            return error_handler_1.ErrorHandler.handle(new error_handler_1.HttpError(400, 'Subcategory index out of range', 'BadRequestError'), res);
+        }
+        category.subcategories.splice(index, 1);
         yield category.save();
         res.json(category);
     }
