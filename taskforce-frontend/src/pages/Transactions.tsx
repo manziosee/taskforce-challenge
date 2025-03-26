@@ -6,7 +6,7 @@ import { getTransactions, addTransaction, updateTransaction, deleteTransaction }
 import { getCategories } from '../services/categoryService';
 
 interface Transaction {
-  id: number;
+  id: string;
   date: Date;
   description: string;
   category: string;
@@ -22,6 +22,7 @@ interface Category {
 
 export default function Transactions() {
   const { currency } = useCurrency();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -36,7 +37,6 @@ export default function Transactions() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,54 +59,6 @@ export default function Transactions() {
       fetchData();
     }
   }, [user]);
-
-  const handleEditTransaction = (transaction: Transaction) => {
-    setEditingTransaction({
-      ...transaction,
-      type: transaction.amount > 0 ? 'income' : 'expense',
-    });
-    setShowAddForm(true);
-  };
-
-  const handleUpdateTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingTransaction) {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await updateTransaction(editingTransaction.id, {
-          ...editingTransaction,
-          userId: user?.id || '',
-          type: Number(editingTransaction.amount) > 0 ? 'income' : 'expense',
-        });
-        const updatedTransactions = transactions.map((t) =>
-          t.id === editingTransaction.id ? response : t
-        );
-        setTransactions(updatedTransactions);
-        setEditingTransaction(null);
-        setShowAddForm(false);
-      } catch (error: unknown) {
-        setError((error as Error).message || 'Failed to update transaction');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleDeleteTransaction = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      setLoading(true);
-      setError(null);
-      try {
-        await deleteTransaction(id);
-        setTransactions(transactions.filter((t) => t.id !== id));
-      } catch (error: unknown) {
-        setError((error as Error).message || 'Failed to delete transaction');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +86,51 @@ export default function Transactions() {
       setError((error as Error).message || 'Failed to add transaction');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowAddForm(true);
+  };
+
+  const handleUpdateTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingTransaction) {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await updateTransaction(editingTransaction.id, {
+          ...editingTransaction,
+          amount: Number(editingTransaction.amount),
+          date: new Date(editingTransaction.date),
+        });
+        const updatedTransactions = transactions.map((t) =>
+          t.id === editingTransaction.id ? response : t
+        );
+        setTransactions(updatedTransactions);
+        setEditingTransaction(null);
+        setShowAddForm(false);
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to update transaction');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      setLoading(true);
+      setError(null);
+      try {
+        await deleteTransaction(id);
+        setTransactions(transactions.filter((t) => t.id !== id));
+      } catch (error: unknown) {
+        setError((error as Error).message || 'Failed to delete transaction');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

@@ -5,8 +5,21 @@ export const getTransactions = async (userId: string) => {
   return response.data;
 };
 
-export const updateTransaction = async (id: number, transactionData: {
+export const addTransaction = async (transactionData: {
   userId: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  subcategory?: string;
+  account: string;
+  date: Date;
+  description: string;
+}) => {
+  const response = await api.post('/api/transactions', transactionData);
+  return response.data;
+};
+
+export const updateTransaction = async (id: string, transactionData: {
   amount: number;
   type: 'income' | 'expense';
   category: string;
@@ -19,21 +32,7 @@ export const updateTransaction = async (id: number, transactionData: {
   return response.data;
 };
 
-export const deleteTransaction = async (id: number) => {
+export const deleteTransaction = async (id: string) => {
   const response = await api.delete(`/api/transactions/${id}`);
-  return response.data;
-};
-
-export const addTransaction = async (transactionData: {
-  userId: string;
-  amount: number;
-  type: 'income' | 'expense';
-  category: string;
-  subcategory?: string;
-  account: string;
-  date: Date;
-  description: string;
-}) => {
-  const response = await api.post('/api/transactions', transactionData);
   return response.data;
 };

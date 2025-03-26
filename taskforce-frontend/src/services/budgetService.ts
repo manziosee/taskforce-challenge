@@ -11,10 +11,8 @@ export const addBudget = async (budgetData: {
   limit: number;
   period: string;
 }) => {
-  // Convert period to lowercase to match backend enum
   const formattedPeriod = budgetData.period.toLowerCase();
-  
-  // Adjust the data to match backend expectations
+
   const payload = {
     userId: budgetData.userId,
     category: budgetData.category,
@@ -31,9 +29,7 @@ export const updateBudget = async (id: string, budgetData: {
   category?: string; 
   limit?: number; 
   period?: string; 
-  spent?: number; 
 }) => {
-  // Convert period to lowercase if it exists
   const payload = { ...budgetData };
   if (payload.period) {
     payload.period = payload.period.toLowerCase();

@@ -28,19 +28,37 @@ ChartJS.register(
 );
 
 interface DashboardData {
-  income: number;
-  expenses: number;
-  categorySpending: {
+  summary: {
+    income: number;
+    expenses: number;
+    net: number;
+  };
+  budgetStatus: {
+    category: string;
+    limit: number;
+    spent: number;
+    remaining: number;
+    percentage: number;
+    status: string;
+  }[];
+  recentTransactions: {
     name: string;
     total: number;
     id: string;
   }[];
+  chartData: {
+    labels: string[];
+    datasets: {
+      data: number[];
+      backgroundColor: string[];
+    }[];
+  };
 }
 
 export default function Dashboard() {
   const { currency } = useCurrency();
   const { user } = useAuth();
-  const [timeRange] = useState('This Month');
+  const [timeRange, setTimeRange] = useState('This Month');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +69,6 @@ export default function Dashboard() {
       setError(null);
       try {
         const response = await getDashboardData(user?.id || '');
-        console.log('Dashboard data:', response);
         setDashboardData(response);
       } catch (error: unknown) {
         console.error('Error fetching dashboard data:', error);
@@ -83,56 +100,17 @@ export default function Dashboard() {
     );
   }
 
-  const lineChartData = dashboardData
-    ? {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        datasets: [
-          {
-            label: 'Income',
-            data: dashboardData?.income || [],
-            borderColor: 'rgb(34, 197, 94)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            tension: 0.4,
-            fill: true,
-          },
-          {
-            label: 'Expenses',
-            data: dashboardData?.expenses || [],
-            borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      }
-    : {
-        labels: [],
-        datasets: [],
-      };
+  const lineChartData = dashboardData?.chartData || {
+    labels: [],
+    datasets: [],
+  };
 
-  const pieChartData = dashboardData
-    ? {
-        labels: dashboardData?.categorySpending?.map(category => category.name) || [],
-        datasets: [
-          {
-            data: dashboardData?.categorySpending?.map(category => category.total) || [],
-            backgroundColor: [
-              'rgb(59, 130, 246)',
-              'rgb(234, 179, 8)',
-              'rgb(168, 85, 247)',
-              'rgb(239, 68, 68)',
-              'rgb(34, 197, 94)',
-              'rgb(107, 114, 128)',
-            ],
-          },
-        ],
-      }
-    : {
-        labels: [],
-        datasets: [],
-      };
+  const pieChartData = dashboardData?.chartData || {
+    labels: [],
+    datasets: [],
+  };
 
-  const recentTransactions = dashboardData?.categorySpending || [];
+  const recentTransactions = dashboardData?.recentTransactions || [];
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -148,11 +126,13 @@ export default function Dashboard() {
           <select
             aria-label="Time Range"
             className="bg-transparent border-none focus:ring-0 text-sm"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
           >
-            <option>{timeRange}</option>
-            <option>Last Month</option>
-            <option>Last 3 Months</option>
-            <option>This Year</option>
+            <option value="This Month">This Month</option>
+            <option value="Last Month">Last Month</option>
+            <option value="Last 3 Months">Last 3 Months</option>
+            <option value="This Year">This Year</option>
           </select>
         </div>
       </div>
@@ -168,7 +148,7 @@ export default function Dashboard() {
             </span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.income?.toLocaleString()}
+            {currency} {dashboardData?.summary.net?.toLocaleString()}
           </p>
           <p className="text-sm text-blue-100">Across all accounts</p>
         </div>
@@ -181,9 +161,9 @@ export default function Dashboard() {
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Income</span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.income?.toLocaleString()}
+            {currency} {dashboardData?.summary.income?.toLocaleString()}
           </p>
-          <p className="text-sm text-green-100">{dashboardData?.income}</p>
+          <p className="text-sm text-green-100">{dashboardData?.summary.income}</p>
         </div>
 
         <div className="hover-card gradient-danger p-6 rounded-2xl shadow-lg text-white">
@@ -194,9 +174,9 @@ export default function Dashboard() {
             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Expenses</span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {currency} {dashboardData?.expenses?.toLocaleString()}
+            {currency} {dashboardData?.summary.expenses?.toLocaleString()}
           </p>
-          <p className="text-sm text-red-100">{dashboardData?.expenses}% of monthly budget</p>
+          <p className="text-sm text-red-100">{dashboardData?.summary.expenses}% of monthly budget</p>
         </div>
       </div>
 
