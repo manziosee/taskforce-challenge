@@ -1,4 +1,3 @@
-// src/routes/dashboardRoutes.ts
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { getDashboardData } from '../controllers/dashboardController';
