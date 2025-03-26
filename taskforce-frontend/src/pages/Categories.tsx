@@ -200,13 +200,13 @@ export default function Categories() {
                   title="Edit Category"
                 >
                   <Edit2 className="w-5 h-5" />
+                </button>
                 <button
                   onClick={() => handleDeleteCategory(category.id)}
                   className="p-2 text-gray-500 hover:text-red-600"
                   title="Delete Category"
                 >
                   <Trash2 className="w-5 h-5" />
-                </button>
                 </button>
               </div>
             </div>
@@ -262,9 +262,8 @@ export default function Categories() {
                   <>
                     <div>
                       <label className="block text-sm font-medium mb-1">Type</label>
-                      <label htmlFor="categoryType" className="block text-sm font-medium mb-1">Type</label>
                       <select
-                        id="categoryType"
+                        title="Category Type"
                         value={newCategory.type}
                         onChange={(e) => setNewCategory({ 
                           ...newCategory, 
