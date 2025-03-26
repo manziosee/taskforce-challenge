@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCSV = void 0;
-// src/utils/csvExport.ts
 const json2csv_1 = require("json2csv");
 const generateCSV = (transactions) => {
     const fields = [

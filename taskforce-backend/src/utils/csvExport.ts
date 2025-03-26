@@ -1,4 +1,3 @@
-// src/utils/csvExport.ts
 import { parse } from 'json2csv';
 
 export const generateCSV = (transactions: any[]) => {

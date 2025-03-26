@@ -1,4 +1,3 @@
-// src/controllers/dashboardController.ts
 import { Request, Response } from 'express';
 import Transaction from '../models/Transaction';
 import Budget from '../models/Budget';
